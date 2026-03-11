@@ -1,315 +1,132 @@
-# Trinity Counselor
+# Trinity
 
-> *The relationship is the client.*
+A private relationship counseling web app. Works on desktop and phone.
 
-Trinity is a multi-agent AI relationship counseling system built on a **Trinity Architecture**: three AI agents that function as a unified relational intelligence, with ironclad privacy boundaries between each partner's private context.
-
-This is not a chatbot. It is a new category of product — **AI-supported relational systems** — beginning with marriages and designed to extend to families, co-founders, leadership teams, and communities.
-
----
-
-## The Core Insight
-
-In relationships, there are three entities:
-- **Person A**
-- **Person B**
-- **The relationship itself**
-
-Traditional couples therapy sees each person through the others' eyes. Trinity gives each person their own private space — and holds the relationship as a living system, separate from either individual.
+**My Space** — private sessions with your own AI counselor (your partner never sees this)
+**Our Space** — a joint session with a relationship counselor who holds both of you
+**Connect** — invite your partner via a code
 
 ---
 
-## Architecture
+## Getting it live (step by step)
 
-### The Three Agents
-
-```
-┌──────────────────────┐    ┌──────────────────────┐
-│     Agent A          │    │     Agent B          │
-│  Private Counselor   │    │  Private Counselor   │
-│  for Partner A       │    │  for Partner B       │
-│                      │    │                      │
-│  • Full privacy      │    │  • Full privacy      │
-│  • EFT-informed      │    │  • EFT-informed      │
-│  • pgvector memory   │    │  • pgvector memory   │
-│  • LangGraph state   │    │  • LangGraph state   │
-└──────────┬───────────┘    └──────────┬───────────┘
-           │  abstracted patterns only  │
-           ▼                           ▼
-    ┌──────────────────────────────────────────┐
-    │         Privacy Mediator                 │
-    │  (pattern synthesis — no raw content)    │
-    └─────────────────────┬────────────────────┘
-                          │
-                          ▼
-    ┌──────────────────────────────────────────┐
-    │   Relational Knowledge Graph (RKG)       │
-    │   Neo4j — abstracted patterns only       │
-    │                                          │
-    │  Person → RelationalPattern              │
-    │  Couple → NeedCluster                    │
-    │  Event  → TherapyFrameInsight            │
-    └─────────────────────┬────────────────────┘
-                          │
-                          ▼
-           ┌──────────────────────────┐
-           │       Agent R            │
-           │  Relationship Agent      │
-           │  "The Third Presence"    │
-           │                          │
-           │  • No access to A or B   │
-           │  • Reads only from RKG   │
-           │  • Mediates joint sess.  │
-           └──────────────────────────┘
-```
-
-### Agent R: The Third Presence
-
-Agent R holds the relationship as its client — not either individual. It knows the shape of what is happening between partners (patterns, cycles, attachment signals) without knowing the private words either partner has used. It is the presence that holds both people, sees the whole, and cares for what is between them.
+You need three things: a Supabase account, an Anthropic API key, and a Vercel account. All have free tiers.
 
 ---
 
-## Privacy Model (3 Layers)
+### Step 1 — Supabase (database + login)
 
-```
-Layer 1: Raw Private Store
-  ├── Per-partner, per-session
-  ├── Encrypted with AES-256-GCM using user-specific key
-  ├── Never leaves the user's namespace
-  └── Never accessible to Agent R or the other partner
+1. Go to [supabase.com](https://supabase.com) and create a free account
+2. Click **New project** — give it a name, create a password, pick a region
+3. Wait ~2 minutes for it to spin up
+4. Go to **SQL Editor** → **New query**, paste the contents of `supabase/schema.sql`, click **Run**
+5. Go to **Settings → API**. Copy:
+   - **Project URL** (looks like `https://xxxxx.supabase.co`)
+   - **anon / public key** (the long string under "Project API keys")
 
-Layer 2: Pattern Synthesis (Privacy Mediator)
-  ├── Triggered when a solo session closes
-  ├── Claude reads raw content (ephemerally, in-process only)
-  ├── Extracts abstract patterns — no quotes, no identifiers
-  └── Raw content discarded after synthesis
+#### Enable Apple Sign In in Supabase
 
-Layer 3: Relational Knowledge Graph (RKG)
-  ├── Neo4j — relational-level insights only
-  ├── "withdraw-pursue pattern active" — not "she said she hates me"
-  ├── Read by Agent R to build its relational context
-  └── Safe to share across the privacy boundary
-```
+> ⚠️ Apple Sign In requires an [Apple Developer account](https://developer.apple.com) ($99/year).
+> **Skip this for now** — Google login works out of the box (see below).
 
----
+For Apple Sign In when you're ready:
+1. In your Apple Developer account → **Certificates, Identifiers & Profiles**
+2. Create an **App ID** with "Sign in with Apple" capability
+3. Create a **Services ID** (this is your web client ID)
+4. Create a **Key** with "Sign in with Apple" selected — download the `.p8` file
+5. In Supabase → **Authentication → Providers → Apple** → fill in the fields
 
-## Therapeutic Framework
+#### Enable Google Sign In in Supabase (easier, free)
 
-Trinity integrates insights from multiple evidence-based approaches:
-
-| Framework | Application |
-|-----------|-------------|
-| **EFT** (Emotionally Focused Therapy) | Primary lens. Access primary emotions beneath reactive behaviors. Map attachment cycles. |
-| **Attachment Theory** | Understand anxious, avoidant, disorganised patterns. Recognize attachment needs driving behavior. |
-| **IFS** (Internal Family Systems) | Parts work. Meet the critic, the withdrawer, the exile. Curiosity over judgment. |
-| **Gottman Method** | Four Horsemen detection. Repair attempts. Sound Relationship House. |
-| **Esther Perel** | Desire, intimacy, aliveness in committed love. The long arc of sustained partnership. |
-| **Family Systems Theory** | The couple as a living system. Symptoms as system signals. Cycles over individuals. |
+1. Go to [console.cloud.google.com](https://console.cloud.google.com) → create a project
+2. **APIs & Services → Credentials → Create Credentials → OAuth client ID**
+3. Application type: **Web application**
+4. Authorized redirect URI: `https://YOUR_PROJECT.supabase.co/auth/v1/callback`
+5. Copy the Client ID and Client Secret
+6. In Supabase → **Authentication → Providers → Google** → paste them in
 
 ---
 
-## Session Types
+### Step 2 — Anthropic API key
 
-| Type | Participants | Agent | Privacy |
-|------|-------------|-------|---------|
-| `solo_a` | Partner A | Agent A | Fully private to A |
-| `solo_b` | Partner B | Agent B | Fully private to B |
-| `joint` | A + B | Agent R | Both present; no private content |
+1. Go to [console.anthropic.com](https://console.anthropic.com)
+2. **API Keys → Create Key**
+3. Copy it — you'll use it in the next step
 
 ---
 
-## Tech Stack
+### Step 3 — Deploy to Vercel
 
-| Component | Technology |
-|-----------|-----------|
-| Backend | Python 3.11 + FastAPI |
-| Agent Framework | LangGraph (StateGraph + PostgresSaver) |
-| LLM | Anthropic Claude (`claude-sonnet-4-6`) |
-| Embeddings | OpenAI `text-embedding-3-small` |
-| Vector / Long-term Memory | pgvector (per-user namespaced) |
-| Relational Knowledge Graph | Neo4j 5.x |
-| Auth | JWT (python-jose) + per-user AES-256-GCM |
-| Frontend | React Native (Expo) |
+1. Push this code to a GitHub repository (if you haven't)
+2. Go to [vercel.com](https://vercel.com) → **Add New → Project** → import your repo
+3. In **Environment Variables**, add these three:
 
----
+   | Name | Value |
+   |------|-------|
+   | `NEXT_PUBLIC_SUPABASE_URL` | your Supabase Project URL |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | your Supabase anon key |
+   | `ANTHROPIC_API_KEY` | your Anthropic key |
 
-## Project Structure
-
-```
-trinitycounselor/
-├── backend/
-│   ├── main.py                    # FastAPI app + lifespan
-│   ├── config.py                  # Pydantic Settings
-│   ├── agents/
-│   │   ├── base_agent.py          # Shared LangGraph scaffolding
-│   │   ├── agent_a.py             # Agent A — full LangGraph implementation
-│   │   ├── agent_b.py             # Agent B
-│   │   ├── agent_r.py             # Agent R (Relationship Agent)
-│   │   └── prompts/               # EFT-informed system prompts
-│   ├── api/
-│   │   ├── middleware/auth.py     # JWT validation dependency
-│   │   └── routes/                # agent_a, agent_b, agent_r, sessions
-│   ├── privacy/
-│   │   ├── encryption.py          # AES-256-GCM per-user encryption
-│   │   ├── synthesizer.py         # Pattern synthesis (no raw content out)
-│   │   └── mediator.py            # Insight Sync orchestrator
-│   ├── memory/
-│   │   ├── pgvector_store.py      # Long-term semantic memory (per-user)
-│   │   └── conversation_store.py  # Encrypted message persistence
-│   ├── graph/
-│   │   ├── rkg_client.py          # Neo4j RKG interface
-│   │   ├── schema.cypher          # Node/relationship definitions
-│   │   └── queries.py             # Typed Cypher query library
-│   ├── models/                    # SQLAlchemy ORM (User, Couple, Session, Message, Pattern)
-│   ├── auth/                      # JWT issuance + per-user key management
-│   └── db/                        # Postgres + Neo4j driver init
-├── frontend/                      # React Native (Expo) skeleton
-├── scripts/
-│   ├── init_db.py                 # Bootstrap postgres + pgvector + checkpointer tables
-│   └── seed_neo4j.py              # Bootstrap RKG constraints + indexes
-├── tests/
-├── docker-compose.yml             # postgres+pgvector, neo4j
-└── pyproject.toml
-```
+4. Click **Deploy**. Done — Vercel gives you a public URL to share.
 
 ---
 
-## Getting Started
-
-### Prerequisites
-
-- Python 3.11+
-- Docker + Docker Compose
-- Anthropic API key
-- OpenAI API key (embeddings only)
-
-### 1. Start infrastructure
+### Running locally (optional)
 
 ```bash
-docker compose up -d
-```
+# 1. Install dependencies
+npm install
 
-This starts:
-- PostgreSQL 16 with pgvector (`localhost:5432`)
-- Neo4j 5.20 Community (`localhost:7474` browser, `localhost:7687` bolt)
+# 2. Set up environment
+cp .env.local.example .env.local
+# Fill in .env.local with your keys
 
-### 2. Install Python dependencies
-
-```bash
-pip install -e ".[dev]"
-```
-
-### 3. Configure environment
-
-```bash
-cp .env.example .env
-# Edit .env — fill in API keys and generate a MASTER_KEY
-python -c "import secrets,base64; print(base64.urlsafe_b64encode(secrets.token_bytes(32)).decode())"
-```
-
-### 4. Initialise the database
-
-```bash
-python scripts/init_db.py
-python scripts/seed_neo4j.py
-```
-
-### 5. Run the API
-
-```bash
-uvicorn backend.main:app --reload
-```
-
-API docs: http://localhost:8000/docs (only visible when `DEBUG=true`)
-
-### 6. Run tests
-
-```bash
-pytest tests/ -v
+# 3. Start dev server
+npm run dev
+# Open http://localhost:3000
 ```
 
 ---
 
-## API Overview
+## Project structure
 
-### Auth
 ```
-POST /sessions/auth/register   — register a user
-POST /sessions/auth/login      — get JWT token
-```
+app/
+  page.tsx              ← Login screen (Apple / Google)
+  (app)/
+    chat/page.tsx       ← My Space (private counselor)
+    us/page.tsx         ← Our Space (relationship counselor)
+    couple/page.tsx     ← Connect (invite partner)
+  api/chat/route.ts     ← API route → calls Claude
 
-### Couple Management
-```
-POST /sessions/invite          — create invite code (Partner A)
-POST /sessions/invite/accept   — accept invite (Partner B) → creates Couple
-```
+components/
+  ChatInterface.tsx     ← Chat UI with streaming
+  CoupleConnect.tsx     ← Invite / accept partner
+  Nav.tsx               ← Bottom navigation
 
-### Sessions
-```
-POST /sessions/                — create a new session (solo_a | solo_b | joint)
-POST /sessions/{id}/close      — close session + trigger Insight Sync
-GET  /sessions/{id}            — get session metadata
-```
+lib/
+  agents.ts             ← System prompts for each counselor
+  supabase/             ← Supabase client helpers
 
-### Agent Chat
-```
-POST /agent-a/chat             — Partner A ↔ Agent A (private)
-POST /agent-b/chat             — Partner B ↔ Agent B (private)
-POST /agent-r/chat             — Either partner ↔ Agent R (relational overview)
-POST /agent-r/joint            — Joint session message (both partners + Agent R)
+supabase/
+  schema.sql            ← Run this once in Supabase SQL Editor
 ```
 
 ---
 
-## Memory Architecture
+## Sharing with friends (MVP)
 
-```
-Within a session (short-term):
-  LangGraph PostgresSaver checkpointer
-  → keyed by thread_id = "{user_id}:{session_id}"
-  → stores full message history + graph state
-  → automatic multi-turn continuity
-
-Across sessions (long-term):
-  pgvector store (per-user namespace)
-  → stores abstracted session summaries
-  → retrieved by semantic similarity on each new message
-  → injected into system prompt as "context from past sessions"
-
-Relational intelligence (cross-boundary):
-  Neo4j RKG
-  → abstracted patterns only
-  → queried by Agent R at the start of every invocation
-  → never contains raw content
-```
+Once deployed to Vercel:
+1. Share the Vercel URL with each couple
+2. Each person signs in separately (Apple or Google)
+3. One partner goes to **Connect** → creates a code → sends it to the other
+4. The other partner enters the code → they're linked
+5. **My Space** is private to each person. **Our Space** is shared.
 
 ---
 
-## Future Expansion
+## Privacy
 
-Trinity's architecture is designed to extend beyond couples:
-
-- **Families** — a family system with individual agents per member + family mediator
-- **Co-founders** — professional relationships with different therapeutic framing
-- **Leadership teams** — group dynamics, power, trust, psychological safety
-- **Friend groups** — peer relationships, conflict repair
-- **Communities** — scaled relational intelligence for larger systems
-
-The pattern: *N individual private agents + 1 system-level mediator agent + 1 shared RKG*.
-
----
-
-## Ethical Considerations
-
-- **Not a replacement for therapy.** Trinity is a between-session support tool. It should recommend professional human therapists for crisis situations.
-- **Privacy by design.** The system is architected so that raw content cannot cross the privacy boundary — this is enforced at the code level, not just policy level.
-- **Consent.** Both partners must actively opt in. Couple linking requires explicit invite + accept.
-- **Data sovereignty.** Per-user encryption keys mean data is meaningless without the user's credential chain.
-- **No permanence of pain.** The system should never store crisis disclosures in a way that creates legal liability. (Future: crisis detection + referral pipeline.)
-- **Transparency.** Users should understand what the system knows and can request deletion.
-
----
-
-## License
-
-Private / proprietary — all rights reserved.
+- Each person's private session is only visible to them
+- The relationship counselor (Our Space) doesn't have access to either person's private chats
+- Supabase Row Level Security enforces this at the database level
