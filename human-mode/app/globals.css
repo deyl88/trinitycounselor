@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: #080810;
+  --color-surface: #111120;
+  --color-accent: #7B68EE;
+  --color-ink: #F0F0FF;
+  --color-muted: #6868AA;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  overscroll-behavior: none;
+}
+
+/* Prevent double-tap zoom on iOS */
+button,
+a {
+  touch-action: manipulation;
+}
+
+/* Smooth transitions for state changes */
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Glow ring for accent elements */
+.glow {
+  box-shadow: 0 0 30px rgba(123, 104, 238, 0.25), 0 0 60px rgba(123, 104, 238, 0.1);
+}
+
+/* Pulse animation for active state indicator */
+@keyframes softPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+
+.pulse-dot {
+  animation: softPulse 2.5s ease-in-out infinite;
+}
