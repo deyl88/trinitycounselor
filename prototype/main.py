@@ -93,6 +93,11 @@ class JointSessionRequest(BaseModel):
 # ── Web UI ────────────────────────────────────────────────────────────────────
 
 @app.get("/", response_class=HTMLResponse)
+def serve_landing():
+    html_path = Path(__file__).parent / "static" / "landing.html"
+    return HTMLResponse(content=html_path.read_text())
+
+@app.get("/app", response_class=HTMLResponse)
 def serve_app():
     html_path = Path(__file__).parent / "static" / "index.html"
     return HTMLResponse(content=html_path.read_text())
