@@ -25,7 +25,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
 
 export function OnboardingScreen({ navigation }: Props) {
   const [name, setName] = useState('');
-  const [role, setRole] = useState<'partner_a' | 'partner_b'>('partner_a');
+  const [role, setRole] = useState<'agent_a' | 'agent_b'>('agent_a');
 
   const handleStart = () => {
     if (!name.trim()) return;
@@ -59,14 +59,14 @@ export function OnboardingScreen({ navigation }: Props) {
 
           <Text style={styles.label}>I am</Text>
           <View style={styles.roleSelector}>
-            {(['partner_a', 'partner_b'] as const).map((r) => (
+            {(['agent_a', 'agent_b'] as const).map((r) => (
               <TouchableOpacity
                 key={r}
                 style={[styles.roleButton, role === r && styles.roleButtonActive]}
                 onPress={() => setRole(r)}
               >
                 <Text style={[styles.roleText, role === r && styles.roleTextActive]}>
-                  {r === 'partner_a' ? 'Partner A' : 'Partner B'}
+                  {r === 'agent_a' ? 'Partner A' : 'Partner B'}
                 </Text>
               </TouchableOpacity>
             ))}
