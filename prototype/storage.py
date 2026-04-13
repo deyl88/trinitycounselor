@@ -16,6 +16,13 @@ import secrets
 import sqlite3
 from datetime import datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
+
+_TZ = ZoneInfo("America/Los_Angeles")
+
+
+def _now() -> str:
+    return datetime.now(_TZ).isoformat()
 
 
 def _db_path() -> str:
@@ -90,7 +97,7 @@ def save_session(code: str, partner_a_name: str, partner_b_name: str):
         conn.execute(
             "INSERT OR IGNORE INTO sessions (code, partner_a_name, partner_b_name, created_at) "
             "VALUES (?, ?, ?, ?)",
-            (code, partner_a_name, partner_b_name, datetime.utcnow().isoformat())
+            (code, partner_a_name, partner_b_name, _now())
         )
 
 
@@ -116,7 +123,7 @@ def get_session_meta(code: str) -> dict | None:
 
 def save_agent_state(code: str, agent_role: str, agent):
     """Persist a PartnerAgent or RelationshipCounselor to the DB."""
-    now = datetime.utcnow().isoformat()
+    now = _now()
 
     if agent_role in ("a", "b"):
         # PartnerAgent
@@ -176,7 +183,7 @@ def log_message(session_code: str, partner_role: str, role: str, content: str):
         conn.execute(
             "INSERT INTO messages (session_code, partner_role, role, content, created_at) "
             "VALUES (?, ?, ?, ?, ?)",
-            (session_code, partner_role, role, content, datetime.utcnow().isoformat())
+            (session_code, partner_role, role, content, _now())
         )
 
 
@@ -202,7 +209,7 @@ def create_or_update_user(google_id: str, email: str, name: str, picture: str = 
                    email = excluded.email,
                    name  = excluded.name,
                    picture = excluded.picture""",
-            (google_id, email, name, picture, datetime.utcnow().isoformat())
+            (google_id, email, name, picture, _now())
         )
         row = conn.execute("SELECT id FROM users WHERE google_id = ?", (google_id,)).fetchone()
         return row["id"]
@@ -210,12 +217,12 @@ def create_or_update_user(google_id: str, email: str, name: str, picture: str = 
 
 def create_user_session(user_id: int) -> str:
     session_id = secrets.token_urlsafe(32)
-    expires_at = (datetime.utcnow() + timedelta(days=30)).isoformat()
+    expires_at = (datetime.now(_TZ) + timedelta(days=30)).isoformat()
     with _connect() as conn:
         conn.execute(
             "INSERT INTO user_sessions (session_id, user_id, created_at, expires_at) "
             "VALUES (?, ?, ?, ?)",
-            (session_id, user_id, datetime.utcnow().isoformat(), expires_at)
+            (session_id, user_id, _now(), expires_at)
         )
     return session_id
 
@@ -227,7 +234,7 @@ def get_user_by_session(session_id: str) -> dict | None:
                FROM user_sessions s
                JOIN users u ON u.id = s.user_id
                WHERE s.session_id = ? AND s.expires_at > ?""",
-            (session_id, datetime.utcnow().isoformat())
+            (session_id, _now())
         ).fetchone()
         return dict(row) if row else None
 
