@@ -438,6 +438,62 @@
       position: relative;
     }
 
+    /* ── Auth banner ── */
+    .auth-banner {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 99;
+      background: rgba(8,14,26,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      height: 60px;
+    }
+    .auth-banner .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .auth-banner .user-info img {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+    }
+    .auth-banner .user-info strong { color: var(--text); }
+    .auth-banner .logout-btn {
+      font-size: 12px;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      transition: border-color 0.15s;
+    }
+    .auth-banner .logout-btn:hover { border-color: var(--teal); color: var(--teal); }
+
+    /* Google sign-in button */
+    .google-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 24px;
+      background: #fff;
+      color: #3c4043;
+      border-radius: 100px;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: box-shadow 0.2s, transform 0.15s;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+    .google-btn:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.4); transform: translateY(-1px); }
+    .google-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+
     /* ── Footer ── */
     footer {
       padding: 40px;
@@ -469,10 +525,19 @@
 </head>
 <body>
 
-<!-- ── Nav ────────────────────────────────────────────────────────────── -->
-<nav>
+<!-- ── Auth banner (shown when logged in) ────────────────────────────── -->
+<div class="auth-banner" id="auth-banner" style="display:none;">
+  <div class="nav-logo" style="font-size:18px; font-weight:800;"><span class="grad">Trinity</span></div>
+  <div style="display:flex; align-items:center; gap:16px;">
+    <div class="user-info" id="user-info"></div>
+    <a href="/auth/logout" class="logout-btn">Sign out</a>
+  </div>
+</div>
+
+<!-- ── Nav (shown when logged out) ───────────────────────────────────── -->
+<nav id="main-nav">
   <div class="nav-logo"><span class="grad">Trinity</span></div>
-  <a href="/app" class="nav-cta">Start a Session <span class="arrow">→</span></a>
+  <a href="/auth/google" class="nav-cta">Sign in with Google <span class="arrow">→</span></a>
 </nav>
 
 <!-- ── Hero ───────────────────────────────────────────────────────────── -->
@@ -494,8 +559,8 @@
       Built on decades of relationship science.
     </p>
 
-    <a href="/app" class="hero-cta">
-      Start a Session <span class="arrow">→</span>
+    <a href="/auth/google" class="hero-cta" id="hero-cta">
+      Sign in with Google <span class="arrow">→</span>
     </a>
   </div>
 </section>
@@ -643,9 +708,9 @@
 <section class="cta-section">
   <div class="orb-cta"></div>
   <h2 style="position:relative;">Ready to actually<br><span class="grad">repair?</span></h2>
-  <p style="position:relative;">Free to try. No account needed. Share a code with your partner.</p>
-  <a href="/app" class="hero-cta" style="position:relative;">
-    Start a Session <span class="arrow">→</span>
+  <p style="position:relative;">Free to try. Sign in with Google — no passwords, no hassle.</p>
+  <a href="/auth/google" class="hero-cta" id="bottom-cta" style="position:relative;">
+    Sign in with Google <span class="arrow">→</span>
   </a>
 </section>
 
@@ -655,5 +720,32 @@
   <p>🔒 Private sessions are architecturally isolated. Only abstracted emotional patterns cross into the shared space — never raw content. Your words stay yours.</p>
 </footer>
 
+<script>
+// Check if already signed in
+fetch('/api/me').then(r => {
+  if (r.ok) return r.json();
+  throw new Error('not authed');
+}).then(user => {
+  // Logged in — swap nav to auth banner, update CTAs to go to /app
+  document.getElementById('main-nav').style.display = 'none';
+  document.getElementById('auth-banner').style.display = 'flex';
+  const info = document.getElementById('user-info');
+  info.innerHTML = user.picture
+    ? `<img src="${user.picture}" alt=""> <strong>${user.name}</strong>`
+    : `<strong>${user.name}</strong>`;
+  document.getElementById('hero-cta').href = '/app';
+  document.getElementById('hero-cta').textContent = 'Start a Session →';
+  document.getElementById('bottom-cta').href = '/app';
+  document.getElementById('bottom-cta').textContent = 'Start a Session →';
+
+  // Check for auth error
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('auth_error')) {
+    console.warn('Auth error occurred');
+  }
+}).catch(() => {
+  // Not logged in — nav stays as sign-in
+});
+</script>
 </body>
 </html>

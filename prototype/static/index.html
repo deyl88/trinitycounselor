@@ -508,6 +508,7 @@
     <span class="brand">Trinity</span>
     <span class="session-code" id="header-code"></span>
     <div class="spacer"></div>
+    <div id="header-user" style="display:flex;align-items:center;gap:8px;"></div>
     <div class="partner-badge">
       <strong id="header-name"></strong>
       <span id="header-role"></span>
@@ -972,8 +973,32 @@ async function sendJoint() {
   }
 }
 
+// ── Auth check ────────────────────────────────────────────────────────────────
+let currentUser = null;
+
+async function checkAuth() {
+  try {
+    const res = await fetch('/api/me');
+    if (!res.ok) { window.location.href = '/'; return false; }
+    currentUser = await res.json();
+    // Show user avatar/name in header
+    const el = document.getElementById('header-user');
+    if (el && currentUser) {
+      el.innerHTML = currentUser.picture
+        ? `<img src="${currentUser.picture}" alt="" style="width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);">`
+        : '';
+      el.title = currentUser.name;
+    }
+    return true;
+  } catch {
+    window.location.href = '/';
+    return false;
+  }
+}
+
 // Init on load
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+  await checkAuth();
   populateRecentSessions();
   document.getElementById('create-name-a').focus();
 });

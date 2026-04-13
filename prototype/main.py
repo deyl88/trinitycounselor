@@ -5,14 +5,18 @@ Trinity Counselor — FastAPI Application (with Web UI + Persistence)
 import os
 import random
 from pathlib import Path
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
+from authlib.integrations.starlette_client import OAuth
 from pydantic import BaseModel
 
 from agents import TrinitySystem
 import storage
+
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-please-set-in-prod")
 
 app = FastAPI(title="Trinity Counselor", version="0.1.0")
 
@@ -20,12 +24,73 @@ app = FastAPI(title="Trinity Counselor", version="0.1.0")
 _static_dir = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
 
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── Google OAuth ──────────────────────────────────────────────────────────────
+oauth = OAuth()
+oauth.register(
+    name="google",
+    client_id=os.environ.get("GOOGLE_CLIENT_ID", ""),
+    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET", ""),
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={"scope": "openid email profile"},
+)
+
+
+@app.get("/auth/google")
+async def auth_google(request: Request):
+    redirect_uri = str(request.url_for("auth_google_callback"))
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+
+@app.get("/auth/google/callback", name="auth_google_callback")
+async def auth_google_callback(request: Request):
+    try:
+        token = await oauth.google.authorize_access_token(request)
+        user_info = token.get("userinfo")
+        user_id = storage.create_or_update_user(
+            google_id=user_info["sub"],
+            email=user_info["email"],
+            name=user_info.get("name", ""),
+            picture=user_info.get("picture", ""),
+        )
+        session_id = storage.create_user_session(user_id)
+        response = RedirectResponse(url="/app")
+        response.set_cookie(
+            "trinity_session", session_id,
+            httponly=True, secure=True, samesite="lax",
+            max_age=30 * 24 * 3600,
+        )
+        return response
+    except Exception:
+        return RedirectResponse(url="/?auth_error=1")
+
+
+@app.get("/auth/logout")
+async def logout(request: Request):
+    session_id = request.cookies.get("trinity_session")
+    if session_id:
+        storage.delete_user_session(session_id)
+    response = RedirectResponse(url="/")
+    response.delete_cookie("trinity_session")
+    return response
+
+
+@app.get("/api/me")
+async def get_me(request: Request):
+    session_id = request.cookies.get("trinity_session")
+    if not session_id:
+        raise HTTPException(401, "Not authenticated")
+    user = storage.get_user_by_session(session_id)
+    if not user:
+        raise HTTPException(401, "Session expired")
+    return user
 
 # ── In-memory cache (loaded from DB on startup) ───────────────────────────────
 sessions: dict[str, TrinitySystem] = {}
@@ -143,9 +208,11 @@ def get_session(code: str):
 def solo_session(req: SoloSessionRequest):
     trinity = _get_trinity(req.relationship_id)
     response = trinity.solo_session(req.partner, req.message)
-    # Save the agent that just spoke
     agent = trinity.agent_a if req.partner == "a" else trinity.agent_b
     storage.save_agent_state(req.relationship_id, req.partner, agent)
+    # Log every message to the permanent history
+    storage.log_message(req.relationship_id, req.partner, "user", req.message)
+    storage.log_message(req.relationship_id, req.partner, "assistant", response)
     return {"response": response}
 
 
@@ -162,6 +229,8 @@ def joint_session(req: JointSessionRequest):
     trinity = _get_trinity(req.relationship_id)
     response = trinity.joint_session(req.speaker, req.message)
     storage.save_agent_state(req.relationship_id, "r", trinity.relationship_counselor)
+    storage.log_message(req.relationship_id, f"joint_{req.speaker}", "user", req.message)
+    storage.log_message(req.relationship_id, f"joint_{req.speaker}", "assistant", response)
     return {"response": response}
 
 
@@ -169,6 +238,10 @@ def joint_session(req: JointSessionRequest):
 def get_history(code: str, partner: str):
     if partner not in ("a", "b", "r"):
         raise HTTPException(400, "Partner must be 'a', 'b', or 'r'")
+    # Use full permanent log if available, fall back to compressed agent state
+    full = storage.get_full_history(code.upper(), partner)
+    if full:
+        return {"code": code.upper(), "partner": partner, "messages": full}
     state = storage.load_agent_state(code.upper(), partner)
     messages = state["conversation_history"] if state else []
     return {"code": code.upper(), "partner": partner, "messages": messages}

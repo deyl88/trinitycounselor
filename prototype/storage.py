@@ -12,8 +12,9 @@ On Railway: set DB_PATH to a path inside a mounted Volume, e.g. /data/trinity.db
 
 import json
 import os
+import secrets
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 
@@ -39,6 +40,34 @@ def init_db():
                 partner_b_name  TEXT NOT NULL,
                 created_at      TEXT NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS users (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                google_id  TEXT UNIQUE NOT NULL,
+                email      TEXT NOT NULL,
+                name       TEXT NOT NULL,
+                picture    TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS user_sessions (
+                session_id TEXT PRIMARY KEY,
+                user_id    INTEGER NOT NULL REFERENCES users(id),
+                created_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS messages (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_code TEXT NOT NULL,
+                partner_role TEXT NOT NULL,
+                role         TEXT NOT NULL,
+                content      TEXT NOT NULL,
+                created_at   TEXT NOT NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_messages_session
+                ON messages (session_code, partner_role, created_at);
 
             CREATE TABLE IF NOT EXISTS agent_state (
                 code                    TEXT NOT NULL,
@@ -137,6 +166,75 @@ def save_agent_state(code: str, agent_role: str, agent):
                     now,
                 )
             )
+
+
+# ── Full message log (exhaustive history) ────────────────────────────────────
+
+def log_message(session_code: str, partner_role: str, role: str, content: str):
+    """Append a single message to the permanent log. Never deleted."""
+    with _connect() as conn:
+        conn.execute(
+            "INSERT INTO messages (session_code, partner_role, role, content, created_at) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (session_code, partner_role, role, content, datetime.utcnow().isoformat())
+        )
+
+
+def get_full_history(session_code: str, partner_role: str) -> list[dict]:
+    """Return every message ever sent in this session for this partner."""
+    with _connect() as conn:
+        rows = conn.execute(
+            "SELECT role, content, created_at FROM messages "
+            "WHERE session_code = ? AND partner_role = ? ORDER BY created_at ASC",
+            (session_code, partner_role)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+# ── User accounts ─────────────────────────────────────────────────────────────
+
+def create_or_update_user(google_id: str, email: str, name: str, picture: str = "") -> int:
+    with _connect() as conn:
+        conn.execute(
+            """INSERT INTO users (google_id, email, name, picture, created_at)
+               VALUES (?, ?, ?, ?, ?)
+               ON CONFLICT (google_id) DO UPDATE SET
+                   email = excluded.email,
+                   name  = excluded.name,
+                   picture = excluded.picture""",
+            (google_id, email, name, picture, datetime.utcnow().isoformat())
+        )
+        row = conn.execute("SELECT id FROM users WHERE google_id = ?", (google_id,)).fetchone()
+        return row["id"]
+
+
+def create_user_session(user_id: int) -> str:
+    session_id = secrets.token_urlsafe(32)
+    expires_at = (datetime.utcnow() + timedelta(days=30)).isoformat()
+    with _connect() as conn:
+        conn.execute(
+            "INSERT INTO user_sessions (session_id, user_id, created_at, expires_at) "
+            "VALUES (?, ?, ?, ?)",
+            (session_id, user_id, datetime.utcnow().isoformat(), expires_at)
+        )
+    return session_id
+
+
+def get_user_by_session(session_id: str) -> dict | None:
+    with _connect() as conn:
+        row = conn.execute(
+            """SELECT u.id, u.email, u.name, u.picture
+               FROM user_sessions s
+               JOIN users u ON u.id = s.user_id
+               WHERE s.session_id = ? AND s.expires_at > ?""",
+            (session_id, datetime.utcnow().isoformat())
+        ).fetchone()
+        return dict(row) if row else None
+
+
+def delete_user_session(session_id: str):
+    with _connect() as conn:
+        conn.execute("DELETE FROM user_sessions WHERE session_id = ?", (session_id,))
 
 
 def load_agent_state(code: str, agent_role: str) -> dict | None:
