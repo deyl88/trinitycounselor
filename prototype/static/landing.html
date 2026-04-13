@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trinity — AI Relationship Counseling</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/static/icon.svg">
+  <link rel="apple-touch-icon" href="/static/icon.svg">
+
+  <!-- iPhone / PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Trinity">
+  <meta name="theme-color" content="#080e1a">
+
+  <!-- Open Graph (link preview when texting) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Trinity — AI Relationship Counseling">
+  <meta property="og:description" content="Your private AI. Your partner's private AI. One shared counselor that helps you both repair — without breaking anyone's privacy.">
+  <meta property="og:image" content="https://trinitycounselor-production.up.railway.app/static/og.png">
+  <meta property="og:url" content="https://trinitycounselor-production.up.railway.app">
+
+  <!-- Twitter / iMessage card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Trinity — AI Relationship Counseling">
+  <meta name="twitter:description" content="Your private AI. Your partner's private AI. One shared counselor that helps you both repair.">
+  <meta name="twitter:image" content="https://trinitycounselor-production.up.railway.app/static/og.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #080e1a;
+      --bg2:      #0d1625;
+      --teal:     #00c2cb;
+      --purple:   #7b3fe4;
+      --teal-dim: rgba(0,194,203,0.15);
+      --text:     #ffffff;
+      --muted:    rgba(255,255,255,0.55);
+      --card-bg:  rgba(255,255,255,0.04);
+      --border:   rgba(255,255,255,0.08);
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── Gradient text ── */
+    .grad {
+      background: linear-gradient(135deg, var(--teal), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 40px;
+      background: rgba(8,14,26,0.8);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .nav-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      background: linear-gradient(135deg, var(--teal), var(--purple));
+      color: #fff;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .nav-cta:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    /* ── Hero ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 120px 40px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* animated orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.18;
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+    .orb-1 { width: 600px; height: 600px; background: var(--teal);   top: -100px; right: -100px; animation-delay: 0s; }
+    .orb-2 { width: 400px; height: 400px; background: var(--purple); bottom: -80px; right: 200px; animation-delay: -4s; }
+    .orb-3 { width: 300px; height: 300px; background: var(--teal);   bottom: 100px; left: -80px; animation-delay: -8s; opacity: 0.1; }
+    @keyframes drift {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(30px, -40px) scale(1.07); }
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      border: 1px solid rgba(0,194,203,0.4);
+      color: var(--teal);
+      margin-bottom: 32px;
+    }
+
+    .hero h1 {
+      font-size: clamp(52px, 8vw, 96px);
+      font-weight: 900;
+      line-height: 1.0;
+      letter-spacing: -3px;
+      margin-bottom: 20px;
+    }
+
+    .hero-sub {
+      font-size: 20px;
+      color: var(--muted);
+      font-weight: 400;
+      margin-bottom: 56px;
+      line-height: 1.5;
+    }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 36px;
+      border-radius: 100px;
+      font-size: 16px;
+      font-weight: 700;
+      text-decoration: none;
+      background: linear-gradient(135deg, var(--teal), var(--purple));
+      color: #fff;
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 0 40px rgba(0,194,203,0.25);
+    }
+    .hero-cta:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 48px rgba(0,194,203,0.35);
+    }
+    .arrow { font-size: 18px; }
+
+    /* ── Story section ── */
+    .story {
+      padding: 120px 40px;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .story-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 48px;
+    }
+
+    .story p {
+      font-size: 22px;
+      line-height: 1.75;
+      color: rgba(255,255,255,0.85);
+      margin-bottom: 12px;
+      font-weight: 300;
+    }
+
+    .story p.bold-line {
+      font-size: 24px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .story p.muted-line {
+      color: var(--muted);
+      font-size: 20px;
+    }
+
+    .story p.accent-line {
+      font-size: 26px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--teal), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-top: 24px;
+      margin-bottom: 0;
+    }
+
+    .story-divider {
+      width: 1px;
+      height: 48px;
+      background: linear-gradient(to bottom, var(--teal), transparent);
+      margin: 32px 0;
+    }
+
+    /* ── How it works ── */
+    .how {
+      padding: 100px 40px;
+      background: var(--bg2);
+    }
+    .how-inner { max-width: 1100px; margin: 0 auto; }
+
+    .section-label {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 16px;
+    }
+    .section-title {
+      text-align: center;
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      margin-bottom: 64px;
+      line-height: 1.1;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1fr;
+      align-items: start;
+      gap: 0;
+    }
+
+    .step {
+      text-align: center;
+      padding: 40px 28px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+    }
+    .step-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin: 0 auto 20px;
+    }
+    .step-icon.teal   { background: rgba(0,194,203,0.12); border: 1px solid rgba(0,194,203,0.25); }
+    .step-icon.purple { background: rgba(123,63,228,0.12); border: 1px solid rgba(123,63,228,0.25); }
+    .step-icon.both   {
+      background: linear-gradient(135deg, rgba(0,194,203,0.12), rgba(123,63,228,0.12));
+      border: 1px solid rgba(123,63,228,0.25);
+    }
+    .step h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: -0.3px;
+    }
+    .step p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .step-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 16px;
+      padding-top: 80px;
+      color: var(--muted);
+      font-size: 22px;
+    }
+
+    /* ── Privacy section ── */
+    .privacy {
+      padding: 100px 40px;
+    }
+    .privacy-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+    }
+    .privacy-text h2 {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 20px;
+      line-height: 1.2;
+    }
+    .privacy-text p {
+      font-size: 16px;
+      color: var(--muted);
+      line-height: 1.75;
+      margin-bottom: 16px;
+    }
+    .privacy-diagram {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 36px 28px;
+    }
+    .agent-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .agent-row.a   { background: rgba(0,194,203,0.08); border: 1px solid rgba(0,194,203,0.2); }
+    .agent-row.b   { background: rgba(123,63,228,0.08); border: 1px solid rgba(123,63,228,0.2); }
+    .agent-row.r   { background: rgba(255,255,255,0.05); border: 1px solid var(--border); }
+    .agent-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .agent-dot.teal   { background: var(--teal); }
+    .agent-dot.purple { background: var(--purple); }
+    .agent-dot.white  { background: rgba(255,255,255,0.5); }
+    .firewall {
+      text-align: center;
+      padding: 10px;
+      margin: 4px 0;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--teal);
+      border: 1px dashed rgba(0,194,203,0.3);
+      border-radius: 8px;
+    }
+
+    /* ── Science section ── */
+    .science {
+      padding: 100px 40px;
+      background: var(--bg2);
+    }
+    .science-inner { max-width: 1000px; margin: 0 auto; }
+    .science-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin-top: 56px;
+    }
+    .science-card {
+      padding: 32px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      transition: border-color 0.2s;
+    }
+    .science-card:hover { border-color: rgba(0,194,203,0.35); }
+    .science-card .icon { font-size: 28px; margin-bottom: 16px; }
+    .science-card h4 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.2px;
+    }
+    .science-card p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    /* ── Bottom CTA ── */
+    .cta-section {
+      padding: 140px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-section .orb-cta {
+      position: absolute;
+      width: 500px; height: 500px;
+      background: linear-gradient(135deg, var(--teal), var(--purple));
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.12;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .cta-section h2 {
+      font-size: clamp(36px, 6vw, 64px);
+      font-weight: 900;
+      letter-spacing: -2px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .cta-section p {
+      font-size: 18px;
+      color: var(--muted);
+      margin-bottom: 48px;
+      position: relative;
+    }
+
+    /* ── Auth banner ── */
+    .auth-banner {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 99;
+      background: rgba(8,14,26,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      height: 60px;
+    }
+    .auth-banner .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .auth-banner .user-info img {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+    }
+    .auth-banner .user-info strong { color: var(--text); }
+    .auth-banner .logout-btn {
+      font-size: 12px;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      transition: border-color 0.15s;
+    }
+    .auth-banner .logout-btn:hover { border-color: var(--teal); color: var(--teal); }
+
+    /* Google sign-in button */
+    .google-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 24px;
+      background: #fff;
+      color: #3c4043;
+      border-radius: 100px;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: box-shadow 0.2s, transform 0.15s;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+    .google-btn:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.4); transform: translateY(-1px); }
+    .google-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+    /* ── Footer ── */
+    footer {
+      padding: 40px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    footer .logo { font-size: 16px; font-weight: 800; }
+    footer p { font-size: 13px; color: var(--muted); max-width: 540px; line-height: 1.6; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      nav { padding: 16px 20px; }
+      .hero { padding: 100px 20px 60px; }
+      .story { padding: 80px 24px; }
+      .story p { font-size: 19px; }
+      .how { padding: 80px 20px; }
+      .steps { grid-template-columns: 1fr; }
+      .step-arrow { padding: 8px 0; transform: rotate(90deg); }
+      .privacy-inner { grid-template-columns: 1fr; }
+      .science-grid { grid-template-columns: 1fr; }
+      .cta-section { padding: 100px 24px; }
+      footer { padding: 32px 24px; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Auth banner (shown when logged in) ────────────────────────────── -->
+<div class="auth-banner" id="auth-banner" style="display:none;">
+  <div class="nav-logo" style="font-size:18px; font-weight:800;"><span class="grad">Trinity</span></div>
+  <div style="display:flex; align-items:center; gap:16px;">
+    <div class="user-info" id="user-info"></div>
+    <a href="/auth/logout" class="logout-btn">Sign out</a>
+  </div>
+</div>
+
+<!-- ── Nav (shown when logged out) ───────────────────────────────────── -->
+<nav id="main-nav">
+  <div class="nav-logo"><span class="grad">Trinity</span></div>
+  <a href="/auth/google" class="nav-cta">Sign in with Google <span class="arrow">→</span></a>
+</nav>
+
+<!-- ── Hero ───────────────────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="hero-inner">
+    <div class="hero-badge">AI Relationship Counseling</div>
+
+    <h1>
+      Feel heard.<br>
+      <span class="grad">Together.</span>
+    </h1>
+
+    <p class="hero-sub">
+      Three AIs. One private space each. One shared space for your relationship.<br>
+      Built on decades of relationship science.
+    </p>
+
+    <a href="/auth/google" class="hero-cta" id="hero-cta">
+      Sign in with Google <span class="arrow">→</span>
+    </a>
+  </div>
+</section>
+
+<!-- ── Story ──────────────────────────────────────────────────────────── -->
+<section class="story">
+  <div class="story-label">Why Trinity exists</div>
+
+  <p class="bold-line">Imagine this.</p>
+
+  <div class="story-divider"></div>
+
+  <p>You're frustrated after an argument.</p>
+  <p>You talk it through with your AI.</p>
+
+  <div class="story-divider"></div>
+
+  <p>Your partner does the same —</p>
+  <p class="bold-line">privately.</p>
+
+  <div class="story-divider"></div>
+
+  <p>Then together…</p>
+  <p>a shared AI helps you see what's actually happening.</p>
+
+  <div class="story-divider"></div>
+
+  <p class="muted-line">Not who's right —</p>
+  <p class="bold-line">but what each of you is feeling.</p>
+
+  <div class="story-divider"></div>
+
+  <p>It helps you slow down,</p>
+  <p>understand each other,</p>
+  <p>and actually repair.</p>
+
+  <p class="accent-line">That's what we're building.</p>
+</section>
+
+<!-- ── How it works ───────────────────────────────────────────────────── -->
+<section class="how">
+  <div class="how-inner">
+    <div class="section-label">How it works</div>
+    <h2 class="section-title">Three AIs. One relationship.</h2>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-icon teal">🔒</div>
+        <h3>Your private space</h3>
+        <p>Talk to your personal AI without your partner seeing anything. It learns your patterns, your needs, your language over time.</p>
+      </div>
+
+      <div class="step-arrow">→</div>
+
+      <div class="step">
+        <div class="step-icon purple">🔒</div>
+        <h3>Their private space</h3>
+        <p>Your partner has the same — a completely separate AI that only they can see. No raw content is ever shared between the two.</p>
+      </div>
+
+      <div class="step-arrow">→</div>
+
+      <div class="step">
+        <div class="step-icon both">💬</div>
+        <h3>Joint session</h3>
+        <p>A Relationship Counselor AI mediates — informed by patterns from both sides, without ever breaking either person's privacy.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Privacy diagram ────────────────────────────────────────────────── -->
+<section class="privacy">
+  <div class="privacy-inner">
+    <div class="privacy-text">
+      <h2>Privacy is the <span class="grad">architecture</span>, not a policy.</h2>
+      <p>Your private conversations with your AI are never shown to your partner — not even to the joint counselor.</p>
+      <p>Only abstracted patterns and emotional signals cross into the shared space. What you said stays yours.</p>
+    </div>
+
+    <div class="privacy-diagram">
+      <div class="agent-row a">
+        <div class="agent-dot teal"></div>
+        <div>
+          <div style="font-size:12px; color:rgba(0,194,203,0.7); margin-bottom:2px;">PARTNER A</div>
+          Private AI — your space only
+        </div>
+      </div>
+
+      <div class="firewall">— Privacy Firewall — patterns only —</div>
+
+      <div class="agent-row r" style="margin-bottom:10px;">
+        <div class="agent-dot white"></div>
+        <div>
+          <div style="font-size:12px; color:rgba(255,255,255,0.4); margin-bottom:2px;">RELATIONSHIP COUNSELOR</div>
+          Sees patterns · Never raw content
+        </div>
+      </div>
+
+      <div class="firewall">— Privacy Firewall — patterns only —</div>
+
+      <div class="agent-row b" style="margin-bottom:0;">
+        <div class="agent-dot purple"></div>
+        <div>
+          <div style="font-size:12px; color:rgba(123,63,228,0.8); margin-bottom:2px;">PARTNER B</div>
+          Private AI — their space only
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Science ────────────────────────────────────────────────────────── -->
+<section class="science">
+  <div class="science-inner">
+    <div class="section-label">Built on evidence</div>
+    <h2 class="section-title">Decades of research.<br><span class="grad">One conversation.</span></h2>
+
+    <div class="science-grid">
+      <div class="science-card">
+        <div class="icon">❤️</div>
+        <h4>Emotionally Focused Therapy (EFT)</h4>
+        <p>Helps couples identify and reshape negative interaction cycles, building secure emotional bonds.</p>
+      </div>
+      <div class="science-card">
+        <div class="icon">📊</div>
+        <h4>The Gottman Method</h4>
+        <p>40+ years of research on what makes relationships succeed — or fail. Trinity watches for the same signals.</p>
+      </div>
+      <div class="science-card">
+        <div class="icon">🪞</div>
+        <h4>Internal Family Systems (IFS)</h4>
+        <p>Understands that our reactions come from inner parts — often protecting old wounds. Trinity holds space for all of them.</p>
+      </div>
+      <div class="science-card">
+        <div class="icon">🔗</div>
+        <h4>Attachment Theory</h4>
+        <p>Our earliest bonds shape how we love and fight. Trinity recognizes attachment styles and helps bridge the gap.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Bottom CTA ─────────────────────────────────────────────────────── -->
+<section class="cta-section">
+  <div class="orb-cta"></div>
+  <h2 style="position:relative;">Ready to actually<br><span class="grad">repair?</span></h2>
+  <p style="position:relative;">Free to try. Sign in with Google — no passwords, no hassle.</p>
+  <a href="/auth/google" class="hero-cta" id="bottom-cta" style="position:relative;">
+    Sign in with Google <span class="arrow">→</span>
+  </a>
+</section>
+
+<!-- ── Footer ─────────────────────────────────────────────────────────── -->
+<footer>
+  <div class="logo"><span class="grad">Trinity</span></div>
+  <p>🔒 Private sessions are architecturally isolated. Only abstracted emotional patterns cross into the shared space — never raw content. Your words stay yours.</p>
+</footer>
+
+<script>
+// Check if already signed in
+fetch('/api/me').then(r => {
+  if (r.ok) return r.json();
+  throw new Error('not authed');
+}).then(user => {
+  // Logged in — swap nav to auth banner, update CTAs to go to /app
+  document.getElementById('main-nav').style.display = 'none';
+  document.getElementById('auth-banner').style.display = 'flex';
+  const info = document.getElementById('user-info');
+  info.innerHTML = user.picture
+    ? `<img src="${user.picture}" alt=""> <strong>${user.name}</strong>`
+    : `<strong>${user.name}</strong>`;
+  document.getElementById('hero-cta').href = '/app';
+  document.getElementById('hero-cta').textContent = 'Start a Session →';
+  document.getElementById('bottom-cta').href = '/app';
+  document.getElementById('bottom-cta').textContent = 'Start a Session →';
+
+  // Check for auth error
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('auth_error')) {
+    console.warn('Auth error occurred');
+  }
+}).catch(() => {
+  // Not logged in — nav stays as sign-in
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trinity Counselor</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/static/icon.svg">
+  <link rel="apple-touch-icon" href="/static/icon.svg">
+
+  <!-- iPhone / PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Trinity">
+  <meta name="theme-color" content="#0f0f1a">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f0f1a;
+      --surface:   #1a1a2e;
+      --surface2:  #22223a;
+      --border:    #2e2e4e;
+      --accent:    #e8d5b7;
+      --accent2:   #c4a882;
+      --purple:    #6060aa;
+      --purple-lt: #8080cc;
+      --text:      #ddd8d0;
+      --muted:     #7070a0;
+      --user-bub:  #2d2d5e;
+      --agent-bub: #ffffff;
+      --crisis:    #fff3cd;
+      --green:     #3a7a5a;
+      --green-bg:  #e8f4ee;
+    }
+
+    html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.5; }
+
+    /* ── Screens ─────────────────────────────────────────────────────── */
+    .screen { display: none; min-height: 100vh; }
+    .screen.active { display: flex; }
+
+    /* ── Landing ─────────────────────────────────────────────────────── */
+    #landing {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .logo-block { text-align: center; margin-bottom: 40px; }
+    .logo-block h1 { font-size: 52px; font-weight: 700; color: var(--accent); letter-spacing: -1px; }
+    .logo-block p { color: var(--muted); font-size: 16px; margin-top: 6px; line-height: 1.6; }
+
+    .cards { display: flex; gap: 20px; width: 100%; max-width: 680px; flex-wrap: wrap; }
+    .card {
+      flex: 1; min-width: 280px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 24px;
+    }
+    .card h2 { font-size: 16px; font-weight: 600; color: var(--accent); margin-bottom: 18px; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .field label { font-size: 12px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    .field input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-size: 15px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field input:focus { border-color: var(--purple); }
+    .field input::placeholder { color: var(--muted); opacity: 0.6; }
+
+    .btn {
+      width: 100%;
+      padding: 13px;
+      border-radius: 10px;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary { background: var(--purple); color: #fff; margin-top: 4px; }
+    .btn-primary:hover:not(:disabled) { background: var(--purple-lt); }
+    .btn-secondary { background: var(--surface2); color: var(--accent); border: 1px solid var(--border); }
+    .btn-secondary:hover:not(:disabled) { border-color: var(--purple); }
+
+    .error-msg { color: #e88080; font-size: 13px; margin-top: 8px; min-height: 18px; }
+
+    .divider { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+
+    .privacy-note {
+      margin-top: 28px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      max-width: 480px;
+      line-height: 1.7;
+    }
+
+    /* ── App shell ───────────────────────────────────────────────────── */
+    #app { flex-direction: column; height: 100vh; }
+
+    .app-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      height: 52px;
+    }
+    .app-header .brand { font-weight: 700; color: var(--accent); font-size: 18px; margin-right: 4px; }
+    .app-header .session-code {
+      font-size: 11px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 8px;
+      color: var(--muted);
+      font-family: monospace;
+      letter-spacing: 1px;
+    }
+    .app-header .spacer { flex: 1; }
+    .app-header .partner-badge {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: right;
+    }
+    .app-header .partner-badge strong { color: var(--accent); display: block; font-size: 14px; }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .tab {
+      flex: 1;
+      padding: 13px 8px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--purple); }
+    .tab .lock { font-size: 11px; margin-right: 4px; }
+
+    /* Chat panes */
+    .pane { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+    .pane.active { display: flex; }
+
+    /* Privacy banner */
+    .privacy-banner {
+      background: var(--green-bg);
+      border-bottom: 1px solid #c0ddc8;
+      padding: 7px 16px;
+      font-size: 12px;
+      color: var(--green);
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    /* Messages */
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 12px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .messages::-webkit-scrollbar { width: 4px; }
+    .messages::-webkit-scrollbar-track { background: transparent; }
+    .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .msg-row { display: flex; margin-bottom: 2px; }
+    .msg-row.user { justify-content: flex-end; }
+    .msg-row.agent { justify-content: flex-start; }
+
+    .msg-sender { font-size: 11px; color: var(--muted); padding: 0 14px; margin-bottom: 3px; }
+
+    .bubble {
+      max-width: min(75%, 480px);
+      padding: 11px 16px;
+      border-radius: 18px;
+      font-size: 15px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .msg-row.user .bubble { background: var(--user-bub); color: #e8e8ff; border-bottom-right-radius: 4px; }
+    .msg-row.agent .bubble { background: var(--agent-bub); color: #1a1a2e; border-bottom-left-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.10); }
+    .msg-row.crisis .bubble { background: var(--crisis); color: #7a5000; border: 1px solid #e6a817; }
+    .msg-row.welcome .bubble { background: var(--surface2); color: var(--muted); font-style: italic; font-size: 14px; border-radius: 10px; }
+
+    /* Typing indicator */
+    .typing { display: none; align-items: center; gap: 8px; padding: 8px 16px; color: var(--muted); font-size: 13px; font-style: italic; }
+    .typing.visible { display: flex; }
+    .dot { width: 6px; height: 6px; background: var(--muted); border-radius: 50%; animation: bounce 1.2s ease-in-out infinite; }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
+
+    /* Input area */
+    .input-area {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      padding: 10px 12px 14px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .input-area textarea {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 11px 16px;
+      font-size: 15px;
+      color: var(--text);
+      resize: none;
+      outline: none;
+      max-height: 120px;
+      min-height: 44px;
+      line-height: 1.5;
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+    .input-area textarea:focus { border-color: var(--purple); }
+    .input-area textarea::placeholder { color: var(--muted); opacity: 0.6; }
+    .send-btn {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: var(--purple);
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .send-btn:hover:not(:disabled) { background: var(--purple-lt); }
+    .send-btn:active { transform: scale(0.93); }
+    .send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* Joint: speaker toggle */
+    .speaker-row {
+      display: flex;
+      gap: 8px;
+      padding: 8px 12px 0;
+      flex-shrink: 0;
+    }
+    .speaker-btn {
+      flex: 1;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .speaker-btn.active { background: var(--purple); border-color: var(--purple); color: #fff; }
+
+    /* ── Recent sessions ─────────────────────────────────────────────── */
+    .recent-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .recent-item:hover { border-color: var(--purple); }
+    .recent-item-left { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .recent-item .session-code-tag { font-family: monospace; font-size: 14px; color: var(--accent); font-weight: 600; }
+    .recent-item .session-meta { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .recent-item .session-ts { font-size: 11px; color: var(--muted); flex-shrink: 0; margin-left: 10px; }
+    .recent-error { color: #e88080; font-size: 12px; margin-top: 6px; }
+
+    /* ── History separator ───────────────────────────────────────────── */
+    .history-sep {
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      padding: 10px 0 6px;
+      border-top: 1px solid var(--border);
+      margin: 8px 0;
+    }
+
+    /* ── Onboarding modal ────────────────────────────────────────────── */
+    #onboarding {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 10, 20, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    #onboarding.visible { display: flex; }
+    .ob-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px 32px;
+      max-width: 520px;
+      width: 100%;
+    }
+    .ob-card h2 { font-size: 22px; font-weight: 700; color: var(--accent); margin-bottom: 8px; letter-spacing: -0.3px; }
+    .ob-card .ob-sub { font-size: 15px; color: var(--muted); line-height: 1.65; margin-bottom: 28px; }
+    .ob-options { display: flex; flex-direction: column; gap: 12px; }
+    .ob-option {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      background: var(--surface2);
+    }
+    .ob-option:hover { border-color: var(--purple); }
+    .ob-option h3 { font-size: 15px; font-weight: 600; color: var(--accent); margin-bottom: 4px; }
+    .ob-option p  { font-size: 13px; color: var(--muted); line-height: 1.55; }
+    .ob-steps {
+      display: none;
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--bg);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .ob-steps.open { display: block; }
+    .ob-steps ol { padding-left: 18px; }
+    .ob-steps li { font-size: 13px; color: var(--muted); line-height: 1.7; margin-bottom: 4px; }
+    .ob-steps li strong { color: var(--text); }
+    .ob-steps .ob-paste-label { font-size: 12px; color: var(--muted); margin: 12px 0 6px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    .ob-steps textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: var(--text);
+      resize: vertical;
+      min-height: 80px;
+      outline: none;
+      font-family: inherit;
+      line-height: 1.5;
+    }
+    .ob-steps textarea:focus { border-color: var(--purple); }
+    .ob-steps .ob-import-note { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+
+    /* ── Loading overlay ─────────────────────────────────────────────── */
+    #loading { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 999; flex-direction: column; gap: 16px; }
+    #loading p { color: var(--muted); font-size: 14px; }
+    #loading.hidden { display: none; }
+    .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--purple); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Responsive ──────────────────────────────────────────────────── */
+    @media (max-width: 500px) {
+      .cards { flex-direction: column; }
+      .logo-block h1 { font-size: 40px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div id="loading" class="hidden">
+  <div class="spinner"></div>
+  <p id="loading-msg">Connecting...</p>
+</div>
+
+<!-- ── Onboarding modal ────────────────────────────────────────────────── -->
+<div id="onboarding">
+  <div class="ob-card">
+    <h2>One quick thing before we start.</h2>
+    <p class="ob-sub">
+      If you already use AI as a personal coach or journal — ChatGPT, Claude, or anything else —
+      your counselor can start with that context instead of learning you from scratch.
+      Think of it like linking a bank account so Trinity already knows your patterns.
+    </p>
+
+    <div class="ob-options">
+
+      <!-- Import option -->
+      <div class="ob-option" id="ob-import-option" onclick="toggleImport()">
+        <h3>📥 Bring my AI history</h3>
+        <p>Export your conversations and paste them here. Trinity will read them to understand you before your first message.</p>
+
+        <div class="ob-steps" id="ob-steps">
+          <ol>
+            <li><strong>ChatGPT:</strong> Settings → Data controls → Export data → wait for email → open the zip → copy text from any conversation</li>
+            <li><strong>Claude.ai:</strong> Open a conversation → select all text → copy</li>
+            <li><strong>Other AI:</strong> Copy and paste any conversation you want Trinity to know about</li>
+          </ol>
+          <div class="ob-paste-label">Paste your conversation below</div>
+          <textarea id="ob-paste" placeholder="Paste your AI conversation here — the more context, the better…" onclick="event.stopPropagation()"></textarea>
+          <p class="ob-import-note">🔒 This stays in your private space only. Your partner never sees it.</p>
+          <button class="btn btn-primary" style="margin-top:12px;" onclick="event.stopPropagation(); startWithHistory(event)">Start with this context →</button>
+        </div>
+      </div>
+
+      <!-- Fresh start option -->
+      <div class="ob-option" onclick="startFresh()">
+        <h3>✨ Start with a clean slate</h3>
+        <p>No worries — Trinity will get to know you naturally through your conversations over time.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREEN: Landing ─────────────────────────────────────────────────── -->
+<div id="landing" class="screen active">
+  <div class="logo-block">
+    <h1>Trinity Counselor</h1>
+    <p>A private space for each of you.<br>A shared space for your relationship.</p>
+  </div>
+
+  <div class="cards">
+
+    <!-- Create session -->
+    <div class="card">
+      <h2>Start a new session</h2>
+      <div class="field">
+        <label>Your full name</label>
+        <input type="text" id="create-name-a" placeholder="Alex Johnson" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Your partner's full name</label>
+        <input type="text" id="create-name-b" placeholder="Jordan Smith" autocomplete="off">
+      </div>
+      <button class="btn btn-primary" id="create-btn" onclick="createSession()">Create session →</button>
+      <p class="error-msg" id="create-error"></p>
+    </div>
+
+    <!-- Join session -->
+    <div class="card" id="join-card">
+      <h2>Join a session</h2>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:16px; line-height:1.6;">
+        Your partner shared an invite link or code with you.
+      </p>
+      <div class="field">
+        <label>Session code</label>
+        <input type="text" id="join-code" placeholder="LAKE42" autocomplete="off"
+          style="text-transform:uppercase; letter-spacing:2px; font-family:monospace; font-size:17px;"
+          oninput="this.value=this.value.toUpperCase()">
+      </div>
+      <div class="field">
+        <label>Your full name</label>
+        <input type="text" id="join-name" placeholder="Jordan Smith" autocomplete="off">
+      </div>
+      <div style="display:flex; gap:8px; margin-bottom:14px;">
+        <button class="speaker-btn active" id="join-a-btn" onclick="setJoinRole('a')">I'm Partner A</button>
+        <button class="speaker-btn" id="join-b-btn" onclick="setJoinRole('b')">I'm Partner B</button>
+      </div>
+      <button class="btn btn-secondary" id="join-btn" onclick="joinSession()">Join session →</button>
+      <p class="error-msg" id="join-error"></p>
+    </div>
+
+    <!-- Recent sessions (shown only if localStorage has entries) -->
+    <div class="card" id="recent-card" style="display:none; width:100%; max-width:680px; flex: unset;">
+      <h2>Continue a session</h2>
+      <div id="recent-list"></div>
+    </div>
+
+  </div>
+
+  <p class="privacy-note">
+    🔒 Private sessions are never shared with your partner. Only abstracted patterns cross into the joint space.
+  </p>
+</div>
+
+<!-- ── SCREEN: App ─────────────────────────────────────────────────────── -->
+<div id="app" class="screen">
+
+  <div class="app-header">
+    <span class="brand">Trinity</span>
+    <span class="session-code" id="header-code"></span>
+    <div class="spacer"></div>
+    <div id="header-user" style="display:flex;align-items:center;gap:8px;"></div>
+    <div class="partner-badge">
+      <strong id="header-name"></strong>
+      <span id="header-role"></span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" id="tab-private" onclick="switchTab('private')">
+      <span class="lock">🔒</span><span id="tab-private-label">Your Private Space</span>
+    </div>
+    <div class="tab" id="tab-joint" onclick="switchTab('joint')">
+      💬 Joint Session
+    </div>
+  </div>
+
+  <!-- Private pane -->
+  <div class="pane active" id="pane-private">
+    <div class="privacy-banner" id="private-banner">🔒 Private session — only you can see this</div>
+    <div id="invite-bar" style="display:none; background:var(--surface2); border-bottom:1px solid var(--border); padding:8px 16px; display:none; align-items:center; justify-content:space-between; gap:12px; flex-shrink:0;">
+      <span style="font-size:13px; color:var(--muted);">Invite your partner to join this session</span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary" style="padding:6px 14px;font-size:13px;" onclick="copyInviteLink()">📋 Copy link</button>
+        <button class="btn btn-secondary" style="padding:6px 14px;font-size:13px;display:none;" onclick="shareInviteLink()" id="share-btn">Share ↗</button>
+      </div>
+    </div>
+    <div class="messages" id="private-messages"></div>
+    <div class="typing" id="private-typing">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      <span>Your counselor is thinking...</span>
+    </div>
+    <div class="input-area">
+      <textarea id="private-input" placeholder="What's on your mind?" rows="1"
+        onkeydown="handleKey(event,'private')" oninput="autoResize(this)"></textarea>
+      <button class="send-btn" id="private-send" onclick="sendPrivate()" title="Send">↑</button>
+    </div>
+  </div>
+
+  <!-- Joint pane -->
+  <div class="pane" id="pane-joint">
+    <div class="privacy-banner" style="background:#f0ecf8; border-color:#c8bce8; color:#4a3878;">
+      💬 Joint session — the Relationship Counselor mediates. Private history is not shared.
+    </div>
+    <div class="messages" id="joint-messages"></div>
+    <div class="typing" id="joint-typing">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      <span>Relationship Counselor is responding...</span>
+    </div>
+    <div class="speaker-row" id="joint-speaker-row">
+      <button class="speaker-btn active" id="joint-a-btn" onclick="setJointSpeaker('a')">
+        <span id="joint-a-label">Partner A</span> speaking
+      </button>
+      <button class="speaker-btn" id="joint-b-btn" onclick="setJointSpeaker('b')">
+        <span id="joint-b-label">Partner B</span> speaking
+      </button>
+    </div>
+    <div class="input-area">
+      <textarea id="joint-input" placeholder="Share what's true for you right now..." rows="1"
+        onkeydown="handleKey(event,'joint')" oninput="autoResize(this)"></textarea>
+      <button class="send-btn" id="joint-send" onclick="sendJoint()" title="Send"
+        style="background:#8060aa;">↑</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+const S = {
+  code: null,
+  partner: null,
+  myName: null,
+  partnerAName: null,
+  partnerBName: null,
+  jointSpeaker: null,
+  joinRole: 'b',
+};
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function show(id) { document.getElementById(id).classList.add('active'); }
+function hide(id) { document.getElementById(id).classList.remove('active'); }
+
+function loading(msg = 'Loading...') {
+  document.getElementById('loading-msg').textContent = msg;
+  document.getElementById('loading').classList.remove('hidden');
+}
+function doneLoading() { document.getElementById('loading').classList.add('hidden'); }
+
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(path, opts);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || 'Request failed');
+  }
+  return res.json();
+}
+
+function addMsg(containerId, text, type, senderName) {
+  const box = document.getElementById(containerId);
+  if (senderName) {
+    const label = document.createElement('div');
+    label.className = 'msg-sender';
+    label.textContent = senderName;
+    box.appendChild(label);
+  }
+  const row = document.createElement('div');
+  row.className = `msg-row ${type}`;
+  const bub = document.createElement('div');
+  bub.className = 'bubble';
+  bub.textContent = text;
+  row.appendChild(bub);
+  box.appendChild(row);
+  box.scrollTop = box.scrollHeight;
+}
+
+function addSep(containerId, text) {
+  const box = document.getElementById(containerId);
+  const sep = document.createElement('div');
+  sep.className = 'history-sep';
+  sep.textContent = text;
+  box.appendChild(sep);
+  box.scrollTop = box.scrollHeight;
+}
+
+function setTyping(pane, visible) {
+  document.getElementById(`${pane}-typing`).classList.toggle('visible', visible);
+  document.getElementById(`${pane}-send`).disabled = visible;
+  document.getElementById(`${pane}-input`).disabled = visible;
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function handleKey(e, pane) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    if (pane === 'private') sendPrivate();
+    else sendJoint();
+  }
+}
+
+// ── Invite link ──────────────────────────────────────────────────────────────
+function getInviteUrl() {
+  return `${window.location.origin}/join/${S.code}`;
+}
+
+async function copyInviteLink() {
+  try {
+    await navigator.clipboard.writeText(getInviteUrl());
+    const btn = document.querySelector('#invite-bar .btn-secondary');
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => btn.textContent = '📋 Copy link', 2000);
+  } catch {
+    prompt('Copy this invite link:', getInviteUrl());
+  }
+}
+
+async function shareInviteLink() {
+  const url = getInviteUrl();
+  if (navigator.share) {
+    await navigator.share({ title: 'Join my Trinity session', text: 'Join my Trinity counseling session', url });
+  } else {
+    copyInviteLink();
+  }
+}
+
+// ── Onboarding ────────────────────────────────────────────────────────────────
+function showOnboarding() {
+  document.getElementById('onboarding').classList.add('visible');
+}
+function hideOnboarding() {
+  document.getElementById('onboarding').classList.remove('visible');
+}
+
+function toggleImport() {
+  const steps = document.getElementById('ob-steps');
+  steps.classList.toggle('open');
+}
+
+function startFresh() {
+  hideOnboarding();
+  enterApp(false);
+}
+
+async function startWithHistory(e) {
+  e.stopPropagation();
+  const text = document.getElementById('ob-paste').value.trim();
+  hideOnboarding();
+  if (text) {
+    loading('Reading your history…');
+    try {
+      await api('POST', '/api/solo', {
+        relationship_id: S.code,
+        partner: S.partner,
+        message: `[CONTEXT IMPORT] The following is conversation history from my previous AI sessions. Please read it to understand who I am, my communication style, and what matters to me — but do not respond to it directly. Just acknowledge briefly that you've read it and are ready to begin.\n\n---\n\n${text.slice(0, 8000)}`,
+      });
+    } catch (_) {}
+    doneLoading();
+  }
+  enterApp(false);
+}
+
+// ── Session history (localStorage) ───────────────────────────────────────────
+const HISTORY_KEY = 'trinity_sessions';
+
+function loadSessionHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function saveSessionToHistory(code, partnerAName, partnerBName, myRole, myName) {
+  let sessions = loadSessionHistory();
+  const idx = sessions.findIndex(s => s.code === code);
+  const entry = { code, partnerAName, partnerBName, myRole, myName, lastVisited: Date.now() };
+  if (idx >= 0) sessions[idx] = entry;
+  else sessions.unshift(entry);
+  sessions = sessions.sort((a, b) => b.lastVisited - a.lastVisited).slice(0, 10);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(sessions));
+}
+
+function removeSessionFromHistory(code) {
+  const sessions = loadSessionHistory().filter(s => s.code !== code);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(sessions));
+}
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 2) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+function populateRecentSessions() {
+  const sessions = loadSessionHistory().slice(0, 5);
+  const card = document.getElementById('recent-card');
+  const list = document.getElementById('recent-list');
+  if (!sessions.length) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  list.innerHTML = '';
+  sessions.forEach(entry => {
+    const item = document.createElement('div');
+    item.className = 'recent-item';
+    item.innerHTML = `
+      <div class="recent-item-left">
+        <span class="session-code-tag">${entry.code}</span>
+        <span class="session-meta">${entry.partnerAName} &amp; ${entry.partnerBName} · you: ${entry.myName} (Partner ${entry.myRole.toUpperCase()})</span>
+      </div>
+      <span class="session-ts">${timeAgo(entry.lastVisited)}</span>`;
+    item.onclick = () => quickRejoin(entry, item);
+    list.appendChild(item);
+  });
+}
+
+async function quickRejoin(entry, itemEl) {
+  loading('Rejoining session...');
+  try {
+    const data = await api('GET', `/api/session/${entry.code}`);
+    S.code = data.code;
+    S.partner = entry.myRole;
+    S.myName = entry.myName;
+    S.partnerAName = data.partner_a_name;
+    S.partnerBName = data.partner_b_name;
+    S.jointSpeaker = entry.myRole;
+    enterApp(true);
+  } catch (e) {
+    doneLoading();
+    removeSessionFromHistory(entry.code);
+    const err = document.createElement('p');
+    err.className = 'recent-error';
+    err.textContent = 'Session not found — it may have been removed.';
+    itemEl.replaceWith(err);
+  }
+}
+
+// ── Render conversation history from server ───────────────────────────────────
+function renderHistory(containerId, messages) {
+  if (!messages || !messages.length) return;
+  messages.forEach(m => {
+    if (m.role === 'user') addMsg(containerId, m.content, 'user');
+    else if (m.role === 'assistant') addMsg(containerId, m.content, 'agent');
+  });
+  addSep(containerId, '— earlier messages above · new messages below —');
+}
+
+// ── Landing interactions ──────────────────────────────────────────────────────
+function setJoinRole(role) {
+  S.joinRole = role;
+  document.getElementById('join-a-btn').classList.toggle('active', role === 'a');
+  document.getElementById('join-b-btn').classList.toggle('active', role === 'b');
+}
+
+async function createSession() {
+  const nameA = document.getElementById('create-name-a').value.trim();
+  const nameB = document.getElementById('create-name-b').value.trim();
+  if (!nameA || !nameB) {
+    document.getElementById('create-error').textContent = 'Please enter both names.';
+    return;
+  }
+  document.getElementById('create-error').textContent = '';
+  loading('Creating session...');
+  try {
+    const data = await api('POST', '/api/session/create', {
+      partner_a_name: nameA,
+      partner_b_name: nameB,
+    });
+    S.code = data.code;
+    S.partner = 'a';
+    S.myName = nameA;
+    S.partnerAName = nameA;
+    S.partnerBName = nameB;
+    S.jointSpeaker = 'a';
+    doneLoading();
+    showOnboarding();
+  } catch (e) {
+    doneLoading();
+    document.getElementById('create-error').textContent = e.message;
+  }
+}
+
+async function joinSession() {
+  const code = document.getElementById('join-code').value.trim().toUpperCase();
+  const name = document.getElementById('join-name').value.trim();
+  if (!code || !name) {
+    document.getElementById('join-error').textContent = 'Please enter the session code and your name.';
+    return;
+  }
+  document.getElementById('join-error').textContent = '';
+  loading('Joining session...');
+  try {
+    const data = await api('GET', `/api/session/${code}`);
+    S.code = data.code;
+    S.partner = S.joinRole;
+    S.myName = name;
+    S.partnerAName = data.partner_a_name;
+    S.partnerBName = data.partner_b_name;
+    S.jointSpeaker = S.joinRole;
+    enterApp(true);
+  } catch (e) {
+    doneLoading();
+    document.getElementById('join-error').textContent = e.message;
+  }
+}
+
+// ── App setup ─────────────────────────────────────────────────────────────────
+async function enterApp(rejoin = false) {
+  const myName = S.myName;
+  const partnerName = S.partner === 'a' ? S.partnerBName : S.partnerAName;
+
+  // Save to localStorage
+  saveSessionToHistory(S.code, S.partnerAName, S.partnerBName, S.partner, myName);
+
+  // Header
+  document.getElementById('header-code').textContent = S.code;
+  document.getElementById('header-name').textContent = myName;
+  document.getElementById('header-role').textContent = `Partner ${S.partner.toUpperCase()}`;
+
+  // Private tab label + banner
+  document.getElementById('tab-private-label').textContent = `${myName}'s Private Space`;
+  document.getElementById('private-banner').textContent = `🔒 Private — only ${myName} can see this conversation`;
+
+  // Joint speaker labels
+  document.getElementById('joint-a-label').textContent = S.partnerAName;
+  document.getElementById('joint-b-label').textContent = S.partnerBName;
+  setJointSpeaker(S.partner);
+
+  // Switch screens immediately so user sees something
+  hide('landing');
+  show('app');
+  doneLoading();
+
+  if (rejoin) {
+    // Load private history from server
+    setTyping('private', true);
+    try {
+      const hist = await api('GET', `/api/session/${S.code}/history/${S.partner}`);
+      if (hist.messages && hist.messages.length) {
+        renderHistory('private-messages', hist.messages);
+      } else {
+        addMsg('private-messages',
+          `Welcome back, ${myName}. Your counselor remembers you. What's on your mind?`, 'agent');
+      }
+    } catch (_) {
+      addMsg('private-messages',
+        `Welcome back, ${myName}. What's on your mind?`, 'agent');
+    } finally {
+      setTyping('private', false);
+    }
+
+    addMsg('joint-messages',
+      `Welcome back, ${S.partnerAName} and ${S.partnerBName}. The session continues — select who's speaking when you're ready.`,
+      'welcome');
+  } else {
+    // Fresh session welcome
+    addMsg('private-messages',
+      `Welcome, ${myName}. This is your private space. Nothing you share here is shown to ${partnerName}. How are you doing today?`,
+      'agent');
+
+    addMsg('joint-messages',
+      `Welcome to your shared space, ${S.partnerAName} and ${S.partnerBName}. I'm here to hold this conversation for both of you. Neither of your private sessions are visible here — only what you each choose to share right now. When you're ready, select who's speaking and begin.`,
+      'welcome');
+
+    if (S.partner === 'a') {
+      document.getElementById('invite-bar').style.display = 'flex';
+      if (navigator.share) document.getElementById('share-btn').style.display = '';
+    }
+  }
+
+  document.getElementById('private-input').focus();
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  ['private', 'joint'].forEach(t => {
+    document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
+    document.getElementById(`pane-${t}`).classList.toggle('active', t === tab);
+  });
+
+  // Sync relational model before joint session
+  if (tab === 'joint') {
+    fetch(`/api/sync?relationship_id=${S.code}`, { method: 'POST' }).catch(() => {});
+  }
+
+  const inputId = tab === 'private' ? 'private-input' : 'joint-input';
+  setTimeout(() => document.getElementById(inputId).focus(), 50);
+}
+
+// ── Joint speaker toggle ──────────────────────────────────────────────────────
+function setJointSpeaker(role) {
+  S.jointSpeaker = role;
+  document.getElementById('joint-a-btn').classList.toggle('active', role === 'a');
+  document.getElementById('joint-b-btn').classList.toggle('active', role === 'b');
+  const name = role === 'a' ? S.partnerAName : S.partnerBName;
+  document.getElementById('joint-input').placeholder = `${name}: share what's true for you...`;
+}
+
+// ── Send messages ─────────────────────────────────────────────────────────────
+async function sendPrivate() {
+  const input = document.getElementById('private-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  input.style.height = 'auto';
+
+  addMsg('private-messages', text, 'user');
+  setTyping('private', true);
+
+  try {
+    const data = await api('POST', '/api/solo', {
+      relationship_id: S.code,
+      partner: S.partner,
+      message: text,
+    });
+    const type = data.crisis_detected ? 'crisis' : 'agent';
+    addMsg('private-messages', data.response, type);
+  } catch (e) {
+    addMsg('private-messages', "I'm having trouble responding right now. Please try again.", 'agent');
+  } finally {
+    setTyping('private', false);
+    input.focus();
+  }
+}
+
+async function sendJoint() {
+  const input = document.getElementById('joint-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  input.style.height = 'auto';
+
+  const speakerName = S.jointSpeaker === 'a' ? S.partnerAName : S.partnerBName;
+  addMsg('joint-messages', text, 'user', speakerName);
+  setTyping('joint', true);
+
+  try {
+    const data = await api('POST', '/api/joint', {
+      relationship_id: S.code,
+      speaker: S.jointSpeaker,
+      message: text,
+    });
+    const type = (data.response || '').includes('988') ? 'crisis' : 'agent';
+    addMsg('joint-messages', data.response, type, 'Relationship Counselor');
+  } catch (e) {
+    addMsg('joint-messages', "I'm having trouble responding right now. Please try again.", 'agent', 'Relationship Counselor');
+  } finally {
+    setTyping('joint', false);
+    input.focus();
+  }
+}
+
+// ── Auth check ────────────────────────────────────────────────────────────────
+let currentUser = null;
+
+async function checkAuth() {
+  try {
+    const res = await fetch('/api/me');
+    if (!res.ok) { window.location.href = '/'; return false; }
+    currentUser = await res.json();
+    // Show user avatar/name in header
+    const el = document.getElementById('header-user');
+    if (el && currentUser) {
+      const avatar = currentUser.picture
+        ? `<img src="${currentUser.picture}" alt="" style="width:28px;height:28px;border-radius:50%;border:2px solid rgba(0,194,203,0.4);">`
+        : `<div style="width:28px;height:28px;border-radius:50%;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;">${currentUser.name[0]}</div>`;
+      el.innerHTML = `
+        ${avatar}
+        <span style="font-size:13px;color:var(--accent);font-weight:500;">${currentUser.name.split(' ')[0]}</span>
+        <a href="/auth/logout" style="font-size:11px;color:var(--muted);text-decoration:none;padding:3px 8px;border:1px solid var(--border);border-radius:6px;" onmouseover="this.style.borderColor='var(--purple)'" onmouseout="this.style.borderColor='var(--border)'">Sign out</a>
+      `;
+    }
+    return true;
+  } catch {
+    window.location.href = '/';
+    return false;
+  }
+}
+
+// Init on load
+window.addEventListener('DOMContentLoaded', async () => {
+  await checkAuth();
+  populateRecentSessions();
+
+  // Auto-fill join code if arriving via /join/{code} link
+  const joinMatch = window.location.pathname.match(/^\/join\/([A-Z0-9]+)$/i);
+  if (joinMatch) {
+    const code = joinMatch[1].toUpperCase();
+    document.getElementById('join-code').value = code;
+    // Scroll join card into view and focus name field
+    document.getElementById('join-card').scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('join-name').focus();
+  } else {
+    document.getElementById('create-name-a').focus();
+  }
+});
+</script>
+</body>
+</html>

@@ -135,6 +135,26 @@ class PartnerAgent:
 
         return reply
 
+    def stream_respond(self, user_message: str):
+        """Generator yielding text chunks. Updates history after stream completes."""
+        self.conversation_history.append({"role": "user", "content": user_message})
+        self.recent_messages_buffer.append(user_message)
+
+        full_reply = ""
+        with client.messages.stream(
+            model="claude-sonnet-4-6",
+            max_tokens=1024,
+            system=self._build_system(),
+            messages=self.conversation_history,
+        ) as stream:
+            for text in stream.text_stream:
+                full_reply += text
+                yield text
+
+        self.conversation_history.append({"role": "assistant", "content": full_reply})
+        if len(self.conversation_history) > 20:
+            self._compress_context()
+
     def _compress_context(self):
         """Compress old conversation into therapeutic summary to manage context window."""
         history_text = "\n".join(
@@ -278,6 +298,24 @@ class RelationshipCounselor:
         reply = response.content[0].text
         self.conversation_history.append({"role": "assistant", "content": reply})
         return reply
+
+    def stream_respond(self, speaker: str, message: str):
+        """Generator yielding text chunks for joint session."""
+        contextualized_message = f"[{speaker}]: {message}"
+        self.conversation_history.append({"role": "user", "content": contextualized_message})
+
+        full_reply = ""
+        with client.messages.stream(
+            model="claude-sonnet-4-6",
+            max_tokens=1024,
+            system=self._build_system(),
+            messages=self.conversation_history,
+        ) as stream:
+            for text in stream.text_stream:
+                full_reply += text
+                yield text
+
+        self.conversation_history.append({"role": "assistant", "content": full_reply})
 
 
 # ── Trinity System Orchestrator ───────────────────────────────────────────────

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#080e1a"/>
+      <stop offset="100%" stop-color="#0d1a2e"/>
+    </linearGradient>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00c2cb"/>
+      <stop offset="100%" stop-color="#7b3fe4"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="18" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Glow orbs -->
+  <circle cx="950" cy="200" r="260" fill="#00c2cb" opacity="0.07"/>
+  <circle cx="850" cy="420" r="200" fill="#7b3fe4" opacity="0.07"/>
+
+  <!-- Trinity icon (large, right side) -->
+  <g transform="translate(820, 195)" filter="url(#glow)">
+    <line x1="120" y1="0" x2="0" y2="200" stroke="url(#g)" stroke-width="3" opacity="0.4"/>
+    <line x1="120" y1="0" x2="240" y2="200" stroke="url(#g)" stroke-width="3" opacity="0.4"/>
+    <line x1="0" y1="200" x2="240" y2="200" stroke="url(#g)" stroke-width="3" opacity="0.4"/>
+    <circle cx="120" cy="0" r="28" fill="url(#g)"/>
+    <circle cx="0" cy="200" r="28" fill="url(#g)"/>
+    <circle cx="240" cy="200" r="28" fill="url(#g)"/>
+  </g>
+
+  <!-- Text content -->
+  <!-- "Trinity" wordmark -->
+  <text x="80" y="220" font-family="Arial, Helvetica, sans-serif" font-size="96" font-weight="900" letter-spacing="-3" fill="url(#g)">Trinity</text>
+
+  <!-- Tagline -->
+  <text x="83" y="285" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="300" fill="rgba(255,255,255,0.6)" letter-spacing="0.5">AI Relationship Counseling</text>
+
+  <!-- Story line -->
+  <text x="83" y="380" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="rgba(255,255,255,0.85)">Your private AI. Your partner's private AI.</text>
+  <text x="83" y="418" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="rgba(255,255,255,0.85)">One shared counselor who helps you both repair.</text>
+
+  <!-- URL -->
+  <text x="83" y="545" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="rgba(255,255,255,0.3)">trinitycounselor-production.up.railway.app</text>
+
+  <!-- Lock badge -->
+  <rect x="83" y="462" width="220" height="40" rx="20" fill="rgba(0,194,203,0.12)" stroke="rgba(0,194,203,0.3)" stroke-width="1"/>
+  <text x="103" y="488" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="600" fill="#00c2cb">🔒  Private by design</text>
+</svg>
