@@ -45,7 +45,8 @@ oauth.register(
 
 @app.get("/auth/google")
 async def auth_google(request: Request):
-    redirect_uri = str(request.url_for("auth_google_callback"))
+    # Force https — Railway terminates TLS at the proxy level
+    redirect_uri = str(request.url_for("auth_google_callback")).replace("http://", "https://")
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
