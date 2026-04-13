@@ -154,9 +154,43 @@ export default function SessionPage() {
       )
       .subscribe()
 
+    // Catch-up fetch: re-check DB right after subscribing in case we missed
+    // the realtime event during the gap between initial load and subscription setup
+    if (view === 'waiting') {
+      getSession(sessionId).then((fresh) => {
+        if (fresh.ended_at) {
+          setSession(fresh)
+          setView('completed')
+        } else if (fresh.started_at) {
+          setSession(fresh)
+          setView('active')
+        }
+      }).catch(() => {})
+    }
+
+    // Polling fallback: check every 3s while waiting — safety net for missed events
+    let pollInterval: ReturnType<typeof setInterval> | null = null
+    if (view === 'waiting') {
+      pollInterval = setInterval(async () => {
+        try {
+          const fresh = await getSession(sessionId)
+          if (fresh.started_at) {
+            setSession(fresh)
+            setView('active')
+          } else if (fresh.ended_at) {
+            setSession(fresh)
+            setView('completed')
+          }
+        } catch {
+          // ignore
+        }
+      }, 3000)
+    }
+
     return () => {
       supabase.removeChannel(participantsSub)
       supabase.removeChannel(sessionSub)
+      if (pollInterval) clearInterval(pollInterval)
     }
   }, [sessionId, view])
 
