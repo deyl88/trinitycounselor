@@ -173,6 +173,12 @@ def serve_app():
     html_path = Path(__file__).parent / "static" / "index.html"
     return HTMLResponse(content=html_path.read_text())
 
+@app.get("/join/{code}", response_class=HTMLResponse)
+def serve_join(code: str):
+    # Serves the app — JS detects /join/{code} and pre-fills the join form
+    html_path = Path(__file__).parent / "static" / "index.html"
+    return HTMLResponse(content=html_path.read_text())
+
 
 # ── API Endpoints ─────────────────────────────────────────────────────────────
 

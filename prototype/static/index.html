@@ -453,22 +453,22 @@
     <div class="card">
       <h2>Start a new session</h2>
       <div class="field">
-        <label>Your first name</label>
-        <input type="text" id="create-name-a" placeholder="Alex" autocomplete="off">
+        <label>Your full name</label>
+        <input type="text" id="create-name-a" placeholder="Alex Johnson" autocomplete="off">
       </div>
       <div class="field">
-        <label>Your partner's first name</label>
-        <input type="text" id="create-name-b" placeholder="Jordan" autocomplete="off">
+        <label>Your partner's full name</label>
+        <input type="text" id="create-name-b" placeholder="Jordan Smith" autocomplete="off">
       </div>
       <button class="btn btn-primary" id="create-btn" onclick="createSession()">Create session →</button>
       <p class="error-msg" id="create-error"></p>
     </div>
 
     <!-- Join session -->
-    <div class="card">
+    <div class="card" id="join-card">
       <h2>Join a session</h2>
       <p style="font-size:13px; color:var(--muted); margin-bottom:16px; line-height:1.6;">
-        Your partner already started a session and shared a code with you.
+        Your partner shared an invite link or code with you.
       </p>
       <div class="field">
         <label>Session code</label>
@@ -477,8 +477,8 @@
           oninput="this.value=this.value.toUpperCase()">
       </div>
       <div class="field">
-        <label>Your first name</label>
-        <input type="text" id="join-name" placeholder="Jordan" autocomplete="off">
+        <label>Your full name</label>
+        <input type="text" id="join-name" placeholder="Jordan Smith" autocomplete="off">
       </div>
       <div style="display:flex; gap:8px; margin-bottom:14px;">
         <button class="speaker-btn active" id="join-a-btn" onclick="setJoinRole('a')">I'm Partner A</button>
@@ -527,6 +527,13 @@
   <!-- Private pane -->
   <div class="pane active" id="pane-private">
     <div class="privacy-banner" id="private-banner">🔒 Private session — only you can see this</div>
+    <div id="invite-bar" style="display:none; background:var(--surface2); border-bottom:1px solid var(--border); padding:8px 16px; display:none; align-items:center; justify-content:space-between; gap:12px; flex-shrink:0;">
+      <span style="font-size:13px; color:var(--muted);">Invite your partner to join this session</span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary" style="padding:6px 14px;font-size:13px;" onclick="copyInviteLink()">📋 Copy link</button>
+        <button class="btn btn-secondary" style="padding:6px 14px;font-size:13px;display:none;" onclick="shareInviteLink()" id="share-btn">Share ↗</button>
+      </div>
+    </div>
     <div class="messages" id="private-messages"></div>
     <div class="typing" id="private-typing">
       <div class="dot"></div><div class="dot"></div><div class="dot"></div>
@@ -643,6 +650,31 @@ function handleKey(e, pane) {
     e.preventDefault();
     if (pane === 'private') sendPrivate();
     else sendJoint();
+  }
+}
+
+// ── Invite link ──────────────────────────────────────────────────────────────
+function getInviteUrl() {
+  return `${window.location.origin}/join/${S.code}`;
+}
+
+async function copyInviteLink() {
+  try {
+    await navigator.clipboard.writeText(getInviteUrl());
+    const btn = document.querySelector('#invite-bar .btn-secondary');
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => btn.textContent = '📋 Copy link', 2000);
+  } catch {
+    prompt('Copy this invite link:', getInviteUrl());
+  }
+}
+
+async function shareInviteLink() {
+  const url = getInviteUrl();
+  if (navigator.share) {
+    await navigator.share({ title: 'Join my Trinity session', text: 'Join my Trinity counseling session', url });
+  } else {
+    copyInviteLink();
   }
 }
 
@@ -885,9 +917,8 @@ async function enterApp(rejoin = false) {
       'welcome');
 
     if (S.partner === 'a') {
-      addMsg('private-messages',
-        `📎 Share this code with ${partnerName} so they can join: ${S.code}`,
-        'welcome');
+      document.getElementById('invite-bar').style.display = 'flex';
+      if (navigator.share) document.getElementById('share-btn').style.display = '';
     }
   }
 
@@ -1004,7 +1035,18 @@ async function checkAuth() {
 window.addEventListener('DOMContentLoaded', async () => {
   await checkAuth();
   populateRecentSessions();
-  document.getElementById('create-name-a').focus();
+
+  // Auto-fill join code if arriving via /join/{code} link
+  const joinMatch = window.location.pathname.match(/^\/join\/([A-Z0-9]+)$/i);
+  if (joinMatch) {
+    const code = joinMatch[1].toUpperCase();
+    document.getElementById('join-code').value = code;
+    // Scroll join card into view and focus name field
+    document.getElementById('join-card').scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('join-name').focus();
+  } else {
+    document.getElementById('create-name-a').focus();
+  }
 });
 </script>
 </body>
