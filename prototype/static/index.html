@@ -424,9 +424,9 @@
             <li><strong>Other AI:</strong> Copy and paste any conversation you want Trinity to know about</li>
           </ol>
           <div class="ob-paste-label">Paste your conversation below</div>
-          <textarea id="ob-paste" placeholder="Paste your AI conversation here — the more context, the better…"></textarea>
+          <textarea id="ob-paste" placeholder="Paste your AI conversation here — the more context, the better…" onclick="event.stopPropagation()"></textarea>
           <p class="ob-import-note">🔒 This stays in your private space only. Your partner never sees it.</p>
-          <button class="btn btn-primary" style="margin-top:12px;" onclick="startWithHistory(event)">Start with this context →</button>
+          <button class="btn btn-primary" style="margin-top:12px;" onclick="event.stopPropagation(); startWithHistory(event)">Start with this context →</button>
         </div>
       </div>
 
