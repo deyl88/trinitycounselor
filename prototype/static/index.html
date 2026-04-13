@@ -984,10 +984,14 @@ async function checkAuth() {
     // Show user avatar/name in header
     const el = document.getElementById('header-user');
     if (el && currentUser) {
-      el.innerHTML = currentUser.picture
-        ? `<img src="${currentUser.picture}" alt="" style="width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);">`
-        : '';
-      el.title = currentUser.name;
+      const avatar = currentUser.picture
+        ? `<img src="${currentUser.picture}" alt="" style="width:28px;height:28px;border-radius:50%;border:2px solid rgba(0,194,203,0.4);">`
+        : `<div style="width:28px;height:28px;border-radius:50%;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;">${currentUser.name[0]}</div>`;
+      el.innerHTML = `
+        ${avatar}
+        <span style="font-size:13px;color:var(--accent);font-weight:500;">${currentUser.name.split(' ')[0]}</span>
+        <a href="/auth/logout" style="font-size:11px;color:var(--muted);text-decoration:none;padding:3px 8px;border:1px solid var(--border);border-radius:6px;" onmouseover="this.style.borderColor='var(--purple)'" onmouseout="this.style.borderColor='var(--border)'">Sign out</a>
+      `;
     }
     return true;
   } catch {
