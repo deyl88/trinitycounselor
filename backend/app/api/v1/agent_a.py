@@ -7,10 +7,9 @@ from sending messages to Agent A's namespace.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, HTTPException, status
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.agent_a import agent_a_graph
 from app.core.exceptions import TrinityError
@@ -135,9 +134,6 @@ async def agent_a_history(
     rows = result.fetchall()
 
     return {
-        "exchanges": [
-            {"content": r[0], "metadata": r[1], "created_at": str(r[2])}
-            for r in rows
-        ],
+        "exchanges": [{"content": r[0], "metadata": r[1], "created_at": str(r[2])} for r in rows],
         "total": len(rows),
     }

@@ -39,6 +39,7 @@ class JointMessage(BaseModel):
 
 class JointSessionRequest(BaseModel):
     """Both partners' messages for a joint session turn."""
+
     partner_a_message: str | None = None
     partner_b_message: str | None = None
     # In practice one partner speaks at a time in joint session;
@@ -154,7 +155,9 @@ async def agent_r_joint_session(
     except TrinityError:
         raise
     except Exception as exc:
-        logger.error("agent_r_joint_failed", relationship_id=current_user.relationship_id, error=str(exc))
+        logger.error(
+            "agent_r_joint_failed", relationship_id=current_user.relationship_id, error=str(exc)
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Joint session encountered an error.",

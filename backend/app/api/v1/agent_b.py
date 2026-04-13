@@ -110,9 +110,6 @@ async def agent_b_history(
     )
     rows = result.fetchall()
     return {
-        "exchanges": [
-            {"content": r[0], "metadata": r[1], "created_at": str(r[2])}
-            for r in rows
-        ],
+        "exchanges": [{"content": r[0], "metadata": r[1], "created_at": str(r[2])} for r in rows],
         "total": len(rows),
     }

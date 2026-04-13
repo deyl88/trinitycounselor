@@ -20,11 +20,11 @@ from app.core.exceptions import AuthError, TokenExpiredError
 class TokenPayload(BaseModel):
     """Decoded JWT payload carried through request context."""
 
-    sub: str                 # user_id (UUID string)
-    partner_tag: str         # "partner_a" | "partner_b" — drives namespace isolation
-    relationship_id: str     # which relationship this user belongs to
-    exp: int                 # unix timestamp
-    iat: int                 # issued-at unix timestamp
+    sub: str  # user_id (UUID string)
+    partner_tag: str  # "partner_a" | "partner_b" — drives namespace isolation
+    relationship_id: str  # which relationship this user belongs to
+    exp: int  # unix timestamp
+    iat: int  # issued-at unix timestamp
 
 
 def create_access_token(

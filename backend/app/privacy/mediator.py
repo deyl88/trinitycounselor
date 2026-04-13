@@ -25,8 +25,6 @@ Trigger paths
 from __future__ import annotations
 
 import json
-import uuid
-from datetime import UTC, datetime
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -61,8 +59,13 @@ class PrivacyMediator:
         Returns:
             SyncResult with counts of what was written.
         """
-        result = SyncResult(relationship_id=relationship_id, signals_processed=0,
-                            patterns_upserted=0, needs_upserted=0, events_recorded=0)
+        result = SyncResult(
+            relationship_id=relationship_id,
+            signals_processed=0,
+            patterns_upserted=0,
+            needs_upserted=0,
+            events_recorded=0,
+        )
         try:
             staged = await self._fetch_unprocessed_signals(relationship_id)
             if not staged:
@@ -143,9 +146,7 @@ class PrivacyMediator:
 
         return all_signals
 
-    async def _fetch_unprocessed_signals(
-        self, relationship_id: str
-    ) -> list[dict]:
+    async def _fetch_unprocessed_signals(self, relationship_id: str) -> list[dict]:
         """Fetch unprocessed staging records for a relationship."""
         result = await self._db.execute(
             text(
@@ -228,10 +229,7 @@ class PrivacyMediator:
         if not staging_ids:
             return
         await self._db.execute(
-            text(
-                "UPDATE sap_signals_staging SET processed = true "
-                "WHERE id = ANY(:ids)"
-            ),
+            text("UPDATE sap_signals_staging SET processed = true WHERE id = ANY(:ids)"),
             {"ids": staging_ids},
         )
         await self._db.commit()

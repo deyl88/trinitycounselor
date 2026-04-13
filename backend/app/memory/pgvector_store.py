@@ -34,7 +34,6 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from langchain_anthropic import ChatAnthropic
 from langchain_core.documents import Document
 from langchain_postgres import PGVector
 from sqlalchemy import text
@@ -102,9 +101,7 @@ class ConversationMemoryStore:
         self._validate_namespace_access(self.namespace)
         settings = self._settings
         # Use sync connection string for PGVector (langchain-postgres uses psycopg3)
-        connection = settings.database_url.replace(
-            "postgresql+asyncpg://", "postgresql+psycopg://"
-        )
+        connection = settings.database_url.replace("postgresql+asyncpg://", "postgresql+psycopg://")
         return PGVector(
             embeddings=self._get_embeddings(),
             collection_name=self.namespace,

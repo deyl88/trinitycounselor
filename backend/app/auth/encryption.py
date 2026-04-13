@@ -117,7 +117,7 @@ def get_master_key() -> bytes:
     except ValueError as exc:
         raise ValueError(
             "MASTER_ENCRYPTION_KEY must be a 64-character hex string (32 bytes). "
-            "Generate with: python -c \"import secrets; print(secrets.token_hex(32))\""
+            'Generate with: python -c "import secrets; print(secrets.token_hex(32))"'
         ) from exc
     if len(key) != 32:
         raise ValueError("MASTER_ENCRYPTION_KEY must be exactly 32 bytes (64 hex chars).")

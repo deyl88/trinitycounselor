@@ -51,35 +51,87 @@ _INDEXES = [
 # These are reused across all relationships via TAGGED_WITH edges.
 _SEED_INSIGHTS = [
     # EFT
-    {"id": "eft:attachment_injury", "framework": "EFT", "tag": "attachment_injury",
-     "description": "A key moment where one partner felt abandoned or betrayed."},
-    {"id": "eft:pursue_withdraw", "framework": "EFT", "tag": "pursue_withdraw",
-     "description": "Classic EFT dance: one partner pursues, the other withdraws."},
-    {"id": "eft:emotional_accessibility", "framework": "EFT", "tag": "emotional_accessibility",
-     "description": "Ability to be emotionally present and reachable for a partner."},
+    {
+        "id": "eft:attachment_injury",
+        "framework": "EFT",
+        "tag": "attachment_injury",
+        "description": "A key moment where one partner felt abandoned or betrayed.",
+    },
+    {
+        "id": "eft:pursue_withdraw",
+        "framework": "EFT",
+        "tag": "pursue_withdraw",
+        "description": "Classic EFT dance: one partner pursues, the other withdraws.",
+    },
+    {
+        "id": "eft:emotional_accessibility",
+        "framework": "EFT",
+        "tag": "emotional_accessibility",
+        "description": "Ability to be emotionally present and reachable for a partner.",
+    },
     # Gottman
-    {"id": "gottman:criticism", "framework": "Gottman", "tag": "criticism",
-     "description": "Attacking the partner's character rather than specific behavior."},
-    {"id": "gottman:contempt", "framework": "Gottman", "tag": "contempt",
-     "description": "Eye-rolling, sarcasm, mockery — the strongest predictor of divorce."},
-    {"id": "gottman:defensiveness", "framework": "Gottman", "tag": "defensiveness",
-     "description": "Counter-attack or innocent victim stance to deflect criticism."},
-    {"id": "gottman:stonewalling", "framework": "Gottman", "tag": "stonewalling",
-     "description": "Emotional shutdown and withdrawal from interaction."},
-    {"id": "gottman:repair_attempt", "framework": "Gottman", "tag": "repair_attempt",
-     "description": "Any action attempting to de-escalate negativity during conflict."},
+    {
+        "id": "gottman:criticism",
+        "framework": "Gottman",
+        "tag": "criticism",
+        "description": "Attacking the partner's character rather than specific behavior.",
+    },
+    {
+        "id": "gottman:contempt",
+        "framework": "Gottman",
+        "tag": "contempt",
+        "description": "Eye-rolling, sarcasm, mockery — the strongest predictor of divorce.",
+    },
+    {
+        "id": "gottman:defensiveness",
+        "framework": "Gottman",
+        "tag": "defensiveness",
+        "description": "Counter-attack or innocent victim stance to deflect criticism.",
+    },
+    {
+        "id": "gottman:stonewalling",
+        "framework": "Gottman",
+        "tag": "stonewalling",
+        "description": "Emotional shutdown and withdrawal from interaction.",
+    },
+    {
+        "id": "gottman:repair_attempt",
+        "framework": "Gottman",
+        "tag": "repair_attempt",
+        "description": "Any action attempting to de-escalate negativity during conflict.",
+    },
     # IFS
-    {"id": "ifs:protector_activated", "framework": "IFS", "tag": "protector_activated",
-     "description": "A protective inner part taking over to prevent vulnerability."},
-    {"id": "ifs:exile_triggered", "framework": "IFS", "tag": "exile_triggered",
-     "description": "Wounded exile part activated, driving intense emotional reaction."},
+    {
+        "id": "ifs:protector_activated",
+        "framework": "IFS",
+        "tag": "protector_activated",
+        "description": "A protective inner part taking over to prevent vulnerability.",
+    },
+    {
+        "id": "ifs:exile_triggered",
+        "framework": "IFS",
+        "tag": "exile_triggered",
+        "description": "Wounded exile part activated, driving intense emotional reaction.",
+    },
     # Attachment
-    {"id": "attachment:anxious", "framework": "Attachment", "tag": "anxious_style",
-     "description": "Anxious attachment pattern: hyperactivation of attachment system."},
-    {"id": "attachment:avoidant", "framework": "Attachment", "tag": "avoidant_style",
-     "description": "Avoidant attachment pattern: deactivation of attachment system."},
-    {"id": "attachment:secure", "framework": "Attachment", "tag": "secure_base",
-     "description": "Moment of secure functioning — felt safety with the partner."},
+    {
+        "id": "attachment:anxious",
+        "framework": "Attachment",
+        "tag": "anxious_style",
+        "description": "Anxious attachment pattern: hyperactivation of attachment system.",
+    },
+    {
+        "id": "attachment:avoidant",
+        "framework": "Attachment",
+        "tag": "avoidant_style",
+        "description": "Avoidant attachment pattern: deactivation of attachment system.",
+    },
+    {
+        "id": "attachment:secure",
+        "framework": "Attachment",
+        "tag": "secure_base",
+        "description": "Moment of secure functioning — felt safety with the partner.",
+    },
 ]
 
 _SEED_INSIGHT_QUERY = """

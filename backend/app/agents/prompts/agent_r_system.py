@@ -13,6 +13,7 @@ ConversationMemoryStore enforces it at the storage layer.
 """
 
 from __future__ import annotations
+
 from typing import Any
 
 
@@ -120,7 +121,9 @@ def _format_relational_model(model: dict[str, Any] | None) -> str:
         lines.append("**Active Relational Patterns:**")
         for p in patterns[:5]:  # Top 5 by intensity
             intensity_pct = int(p.get("intensity", 0) * 100)
-            lines.append(f"  - {p.get('name', 'Unknown')} [{p.get('category', '')}] — intensity {intensity_pct}%")
+            lines.append(
+                f"  - {p.get('name', 'Unknown')} [{p.get('category', '')}] — intensity {intensity_pct}%"
+            )
 
     needs = model.get("unmet_needs", [])
     if needs:
@@ -146,6 +149,8 @@ def _format_relational_model(model: dict[str, Any] | None) -> str:
     recent_events = model.get("recent_events", [])
     unresolved = [e for e in recent_events if not e.get("resolved")]
     if unresolved:
-        lines.append(f"\n**Unresolved Events:** {len(unresolved)} (last: {unresolved[0].get('type', '')})")
+        lines.append(
+            f"\n**Unresolved Events:** {len(unresolved)} (last: {unresolved[0].get('type', '')})"
+        )
 
     return "\n".join(lines)
