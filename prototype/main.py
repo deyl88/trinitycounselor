@@ -7,7 +7,8 @@ import random
 from pathlib import Path
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, RedirectResponse
+import json
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from authlib.integrations.starlette_client import OAuth
@@ -214,13 +215,24 @@ def get_session(code: str):
 @app.post("/api/solo")
 def solo_session(req: SoloSessionRequest):
     trinity = _get_trinity(req.relationship_id)
-    response = trinity.solo_session(req.partner, req.message)
     agent = trinity.agent_a if req.partner == "a" else trinity.agent_b
-    storage.save_agent_state(req.relationship_id, req.partner, agent)
-    # Log every message to the permanent history
-    storage.log_message(req.relationship_id, req.partner, "user", req.message)
-    storage.log_message(req.relationship_id, req.partner, "assistant", response)
-    return {"response": response}
+    full_text: list[str] = []
+
+    def generate():
+        try:
+            for chunk in agent.stream_respond(req.message):
+                full_text.append(chunk)
+                yield f"data: {json.dumps({'delta': chunk})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+            return
+        full_response = "".join(full_text)
+        storage.save_agent_state(req.relationship_id, req.partner, agent)
+        storage.log_message(req.relationship_id, req.partner, "user", req.message)
+        storage.log_message(req.relationship_id, req.partner, "assistant", full_response)
+        yield f"data: {json.dumps({'done': True})}\n\n"
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
 
 
 @app.post("/api/sync")
@@ -234,11 +246,24 @@ def sync_ril(relationship_id: str):
 @app.post("/api/joint")
 def joint_session(req: JointSessionRequest):
     trinity = _get_trinity(req.relationship_id)
-    response = trinity.joint_session(req.speaker, req.message)
-    storage.save_agent_state(req.relationship_id, "r", trinity.relationship_counselor)
-    storage.log_message(req.relationship_id, f"joint_{req.speaker}", "user", req.message)
-    storage.log_message(req.relationship_id, f"joint_{req.speaker}", "assistant", response)
-    return {"response": response}
+    speaker_name = trinity.partner_a_name if req.speaker == "a" else trinity.partner_b_name
+    full_text: list[str] = []
+
+    def generate():
+        try:
+            for chunk in trinity.relationship_counselor.stream_respond(speaker_name, req.message):
+                full_text.append(chunk)
+                yield f"data: {json.dumps({'delta': chunk})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+            return
+        full_response = "".join(full_text)
+        storage.save_agent_state(req.relationship_id, "r", trinity.relationship_counselor)
+        storage.log_message(req.relationship_id, f"joint_{req.speaker}", "user", req.message)
+        storage.log_message(req.relationship_id, f"joint_{req.speaker}", "assistant", full_response)
+        yield f"data: {json.dumps({'done': True})}\n\n"
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
 
 
 @app.get("/api/session/{code}/history/{partner}")
