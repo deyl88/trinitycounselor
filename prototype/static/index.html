@@ -505,7 +505,7 @@
 <div id="app" class="screen">
 
   <div class="app-header">
-    <span class="brand">Trinity</span>
+    <span class="brand" onclick="backToLanding()" style="cursor:pointer;" title="Back to home">Trinity</span>
     <span class="session-code" id="header-code"></span>
     <div class="spacer"></div>
     <div id="header-user" style="display:flex;align-items:center;gap:8px;"></div>
@@ -651,6 +651,17 @@ function handleKey(e, pane) {
     if (pane === 'private') sendPrivate();
     else sendJoint();
   }
+}
+
+// ── Navigation ───────────────────────────────────────────────────────────────
+function backToLanding() {
+  hide('app');
+  // Reset chat panes so they're fresh if user starts a new session
+  ['private-messages', 'joint-messages'].forEach(id => {
+    document.getElementById(id).innerHTML = '';
+  });
+  show('landing');
+  populateRecentSessions();
 }
 
 // ── Invite link ──────────────────────────────────────────────────────────────
@@ -950,6 +961,74 @@ function setJointSpeaker(role) {
   document.getElementById('joint-input').placeholder = `${name}: share what's true for you...`;
 }
 
+// ── Streaming helper ──────────────────────────────────────────────────────────
+async function streamResponse(endpoint, body, containerId, pane, senderName) {
+  const box = document.getElementById(containerId);
+
+  // Create bubble to stream into
+  if (senderName) {
+    const label = document.createElement('div');
+    label.className = 'msg-sender';
+    label.textContent = senderName;
+    box.appendChild(label);
+  }
+  const row = document.createElement('div');
+  row.className = 'msg-row agent';
+  const bub = document.createElement('div');
+  bub.className = 'bubble';
+  row.appendChild(bub);
+
+  let firstChunk = true;
+
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || 'Request failed');
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        let data;
+        try { data = JSON.parse(line.slice(6)); } catch { continue; }
+        if (data.error) throw new Error(data.error);
+        if (data.delta) {
+          if (firstChunk) {
+            setTyping(pane, false);
+            box.appendChild(row);
+            firstChunk = false;
+          }
+          bub.textContent += data.delta;
+          box.scrollTop = box.scrollHeight;
+        }
+      }
+    }
+  } catch (e) {
+    setTyping(pane, false);
+    bub.textContent = "I'm having trouble responding right now. Please try again.";
+    if (firstChunk) box.appendChild(row);
+  } finally {
+    if (firstChunk) { box.appendChild(row); }
+    setTyping(pane, false);
+  }
+
+  return bub.textContent;
+}
+
 // ── Send messages ─────────────────────────────────────────────────────────────
 async function sendPrivate() {
   const input = document.getElementById('private-input');
@@ -961,20 +1040,13 @@ async function sendPrivate() {
   addMsg('private-messages', text, 'user');
   setTyping('private', true);
 
-  try {
-    const data = await api('POST', '/api/solo', {
-      relationship_id: S.code,
-      partner: S.partner,
-      message: text,
-    });
-    const type = data.crisis_detected ? 'crisis' : 'agent';
-    addMsg('private-messages', data.response, type);
-  } catch (e) {
-    addMsg('private-messages', "I'm having trouble responding right now. Please try again.", 'agent');
-  } finally {
-    setTyping('private', false);
-    input.focus();
-  }
+  await streamResponse(
+    '/api/solo',
+    { relationship_id: S.code, partner: S.partner, message: text },
+    'private-messages', 'private', null
+  );
+
+  input.focus();
 }
 
 async function sendJoint() {
@@ -988,20 +1060,13 @@ async function sendJoint() {
   addMsg('joint-messages', text, 'user', speakerName);
   setTyping('joint', true);
 
-  try {
-    const data = await api('POST', '/api/joint', {
-      relationship_id: S.code,
-      speaker: S.jointSpeaker,
-      message: text,
-    });
-    const type = (data.response || '').includes('988') ? 'crisis' : 'agent';
-    addMsg('joint-messages', data.response, type, 'Relationship Counselor');
-  } catch (e) {
-    addMsg('joint-messages', "I'm having trouble responding right now. Please try again.", 'agent', 'Relationship Counselor');
-  } finally {
-    setTyping('joint', false);
-    input.focus();
-  }
+  await streamResponse(
+    '/api/joint',
+    { relationship_id: S.code, speaker: S.jointSpeaker, message: text },
+    'joint-messages', 'joint', 'Relationship Counselor'
+  );
+
+  input.focus();
 }
 
 // ── Auth check ────────────────────────────────────────────────────────────────
