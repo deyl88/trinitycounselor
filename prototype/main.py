@@ -165,6 +165,15 @@ def joint_session(req: JointSessionRequest):
     return {"response": response}
 
 
+@app.get("/api/session/{code}/history/{partner}")
+def get_history(code: str, partner: str):
+    if partner not in ("a", "b", "r"):
+        raise HTTPException(400, "Partner must be 'a', 'b', or 'r'")
+    state = storage.load_agent_state(code.upper(), partner)
+    messages = state["conversation_history"] if state else []
+    return {"code": code.upper(), "partner": partner, "messages": messages}
+
+
 @app.get("/api/model/{relationship_id}")
 def get_model(relationship_id: str):
     trinity = _get_trinity(relationship_id)
