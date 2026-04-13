@@ -313,6 +313,71 @@
       margin: 8px 0;
     }
 
+    /* ── Onboarding modal ────────────────────────────────────────────── */
+    #onboarding {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 10, 20, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    #onboarding.visible { display: flex; }
+    .ob-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px 32px;
+      max-width: 520px;
+      width: 100%;
+    }
+    .ob-card h2 { font-size: 22px; font-weight: 700; color: var(--accent); margin-bottom: 8px; letter-spacing: -0.3px; }
+    .ob-card .ob-sub { font-size: 15px; color: var(--muted); line-height: 1.65; margin-bottom: 28px; }
+    .ob-options { display: flex; flex-direction: column; gap: 12px; }
+    .ob-option {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      background: var(--surface2);
+    }
+    .ob-option:hover { border-color: var(--purple); }
+    .ob-option h3 { font-size: 15px; font-weight: 600; color: var(--accent); margin-bottom: 4px; }
+    .ob-option p  { font-size: 13px; color: var(--muted); line-height: 1.55; }
+    .ob-steps {
+      display: none;
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--bg);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .ob-steps.open { display: block; }
+    .ob-steps ol { padding-left: 18px; }
+    .ob-steps li { font-size: 13px; color: var(--muted); line-height: 1.7; margin-bottom: 4px; }
+    .ob-steps li strong { color: var(--text); }
+    .ob-steps .ob-paste-label { font-size: 12px; color: var(--muted); margin: 12px 0 6px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    .ob-steps textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: var(--text);
+      resize: vertical;
+      min-height: 80px;
+      outline: none;
+      font-family: inherit;
+      line-height: 1.5;
+    }
+    .ob-steps textarea:focus { border-color: var(--purple); }
+    .ob-steps .ob-import-note { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+
     /* ── Loading overlay ─────────────────────────────────────────────── */
     #loading { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 999; flex-direction: column; gap: 16px; }
     #loading p { color: var(--muted); font-size: 14px; }
@@ -333,6 +398,46 @@
 <div id="loading" class="hidden">
   <div class="spinner"></div>
   <p id="loading-msg">Connecting...</p>
+</div>
+
+<!-- ── Onboarding modal ────────────────────────────────────────────────── -->
+<div id="onboarding">
+  <div class="ob-card">
+    <h2>One quick thing before we start.</h2>
+    <p class="ob-sub">
+      If you already use AI as a personal coach or journal — ChatGPT, Claude, or anything else —
+      your counselor can start with that context instead of learning you from scratch.
+      Think of it like linking a bank account so Trinity already knows your patterns.
+    </p>
+
+    <div class="ob-options">
+
+      <!-- Import option -->
+      <div class="ob-option" id="ob-import-option" onclick="toggleImport()">
+        <h3>📥 Bring my AI history</h3>
+        <p>Export your conversations and paste them here. Trinity will read them to understand you before your first message.</p>
+
+        <div class="ob-steps" id="ob-steps">
+          <ol>
+            <li><strong>ChatGPT:</strong> Settings → Data controls → Export data → wait for email → open the zip → copy text from any conversation</li>
+            <li><strong>Claude.ai:</strong> Open a conversation → select all text → copy</li>
+            <li><strong>Other AI:</strong> Copy and paste any conversation you want Trinity to know about</li>
+          </ol>
+          <div class="ob-paste-label">Paste your conversation below</div>
+          <textarea id="ob-paste" placeholder="Paste your AI conversation here — the more context, the better…"></textarea>
+          <p class="ob-import-note">🔒 This stays in your private space only. Your partner never sees it.</p>
+          <button class="btn btn-primary" style="margin-top:12px;" onclick="startWithHistory(event)">Start with this context →</button>
+        </div>
+      </div>
+
+      <!-- Fresh start option -->
+      <div class="ob-option" onclick="startFresh()">
+        <h3>✨ Start with a clean slate</h3>
+        <p>No worries — Trinity will get to know you naturally through your conversations over time.</p>
+      </div>
+
+    </div>
+  </div>
 </div>
 
 <!-- ── SCREEN: Landing ─────────────────────────────────────────────────── -->
@@ -540,6 +645,42 @@ function handleKey(e, pane) {
   }
 }
 
+// ── Onboarding ────────────────────────────────────────────────────────────────
+function showOnboarding() {
+  document.getElementById('onboarding').classList.add('visible');
+}
+function hideOnboarding() {
+  document.getElementById('onboarding').classList.remove('visible');
+}
+
+function toggleImport() {
+  const steps = document.getElementById('ob-steps');
+  steps.classList.toggle('open');
+}
+
+function startFresh() {
+  hideOnboarding();
+  enterApp(false);
+}
+
+async function startWithHistory(e) {
+  e.stopPropagation();
+  const text = document.getElementById('ob-paste').value.trim();
+  hideOnboarding();
+  if (text) {
+    loading('Reading your history…');
+    try {
+      await api('POST', '/api/solo', {
+        relationship_id: S.code,
+        partner: S.partner,
+        message: `[CONTEXT IMPORT] The following is conversation history from my previous AI sessions. Please read it to understand who I am, my communication style, and what matters to me — but do not respond to it directly. Just acknowledge briefly that you've read it and are ready to begin.\n\n---\n\n${text.slice(0, 8000)}`,
+      });
+    } catch (_) {}
+    doneLoading();
+  }
+  enterApp(false);
+}
+
 // ── Session history (localStorage) ───────────────────────────────────────────
 const HISTORY_KEY = 'trinity_sessions';
 
@@ -652,7 +793,8 @@ async function createSession() {
     S.partnerAName = nameA;
     S.partnerBName = nameB;
     S.jointSpeaker = 'a';
-    enterApp(false);
+    doneLoading();
+    showOnboarding();
   } catch (e) {
     doneLoading();
     document.getElementById('create-error').textContent = e.message;
