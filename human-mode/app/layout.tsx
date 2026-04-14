@@ -4,10 +4,15 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'Human Mode',
   description: 'Tap in. Be here.',
+  manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'Human Mode',
+    startupImage: [],
+  },
+  icons: {
+    apple: '/icon-192.png',
   },
 }
 
