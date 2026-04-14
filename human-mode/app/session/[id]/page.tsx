@@ -299,15 +299,25 @@ export default function SessionPage() {
         <div className="w-full max-w-xs space-y-3">
           <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-surface">
             <span className="text-lg mt-0.5">🌙</span>
-            <p className="text-sm text-muted leading-relaxed">
-              Turn on Do Not Disturb
-            </p>
+            <div>
+              <p className="text-sm text-muted leading-relaxed">
+                Enable Do Not Disturb
+              </p>
+              <p className="text-xs text-muted/50 mt-0.5">
+                Swipe down → tap the moon 🌙 icon
+              </p>
+            </div>
           </div>
           <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-surface">
             <span className="text-lg mt-0.5">📱</span>
-            <p className="text-sm text-muted leading-relaxed">
-              Place your phone face down
-            </p>
+            <div>
+              <p className="text-sm text-muted leading-relaxed">
+                Place your phone face down
+              </p>
+              <p className="text-xs text-muted/50 mt-0.5">
+                Or put it in your pocket
+              </p>
+            </div>
           </div>
         </div>
 
