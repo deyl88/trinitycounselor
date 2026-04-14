@@ -1,12 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createSession, upsertUser, addParticipant, getOrCreateUserId } from '@/lib/session'
+import { createSession, upsertUser, addParticipant, getOrCreateUserId, getSavedName, saveName } from '@/lib/session'
 
 export default function CreatePage() {
   const router = useRouter()
   const [name, setName] = useState('')
+
+  useEffect(() => {
+    const saved = getSavedName()
+    if (saved) setName(saved)
+  }, [])
   const [duration, setDuration] = useState<30 | 60>(30)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -20,6 +25,7 @@ export default function CreatePage() {
     setError('')
     try {
       const userId = getOrCreateUserId()
+      saveName(name.trim())
       await upsertUser(userId, name.trim())
       const session = await createSession(duration)
       await addParticipant(session.id, userId)

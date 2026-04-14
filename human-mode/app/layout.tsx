@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import Header from '@/components/Header'
 
 export const metadata: Metadata = {
   title: 'Human Mode',
@@ -33,6 +34,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen bg-bg font-sans antialiased">
         <main className="mx-auto max-w-md min-h-screen flex flex-col">
+          <Header />
           {children}
         </main>
       </body>

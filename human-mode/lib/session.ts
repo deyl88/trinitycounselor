@@ -1,6 +1,18 @@
 import { supabase } from './supabase'
 import { v4 as uuidv4 } from 'uuid'
 
+// ── User name persistence ─────────────────────────────────────────────────────
+
+export function getSavedName(): string {
+  if (typeof window === 'undefined') return ''
+  return localStorage.getItem('humanmode_user_name') ?? ''
+}
+
+export function saveName(name: string) {
+  if (typeof window === 'undefined') return
+  localStorage.setItem('humanmode_user_name', name)
+}
+
 // ── User identity ────────────────────────────────────────────────────────────
 
 export function getOrCreateUserId(): string {
@@ -91,6 +103,42 @@ export async function endSession(sessionId: string) {
 }
 
 // ── Session stats ────────────────────────────────────────────────────────────
+
+// ── Past sessions for profile ─────────────────────────────────────────────────
+
+export async function getUserSessions(userId: string) {
+  const { data: myParts, error } = await supabase
+    .from('participants')
+    .select('session_id, joined_at')
+    .eq('user_id', userId)
+    .order('joined_at', { ascending: false })
+    .limit(30)
+
+  if (error || !myParts || myParts.length === 0) return []
+
+  const sessionIds = myParts.map((p) => p.session_id)
+
+  const [{ data: sessions }, { data: partnerParts }] = await Promise.all([
+    supabase
+      .from('sessions')
+      .select('id, duration, started_at, ended_at, created_at')
+      .in('id', sessionIds)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('participants')
+      .select('session_id, user_id, users(id, name)')
+      .in('session_id', sessionIds)
+      .neq('user_id', userId),
+  ])
+
+  if (!sessions) return []
+
+  return sessions.map((s) => {
+    const pp = partnerParts?.find((p) => p.session_id === s.id)
+    const partner = pp?.users as { id: string; name: string } | null ?? null
+    return { ...s, partner }
+  })
+}
 
 export async function getSessionsTogether(
   userId: string,

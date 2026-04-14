@@ -2,13 +2,18 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { getSession, upsertUser, addParticipant, getOrCreateUserId } from '@/lib/session'
+import { getSession, upsertUser, addParticipant, getOrCreateUserId, getSavedName, saveName } from '@/lib/session'
 
 export default function JoinPage() {
   const { id: sessionId } = useParams<{ id: string }>()
   const router = useRouter()
 
   const [name, setName] = useState('')
+
+  useEffect(() => {
+    const saved = getSavedName()
+    if (saved) setName(saved)
+  }, [])
   const [duration, setDuration] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [loadingSession, setLoadingSession] = useState(true)
@@ -39,6 +44,7 @@ export default function JoinPage() {
     setError('')
     try {
       const userId = getOrCreateUserId()
+      saveName(name.trim())
       await upsertUser(userId, name.trim())
       await addParticipant(sessionId, userId)
       router.push(`/session/${sessionId}`)
