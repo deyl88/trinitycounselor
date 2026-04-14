@@ -8,6 +8,8 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 import json
+import queue
+import threading
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
@@ -219,20 +221,40 @@ def solo_session(req: SoloSessionRequest):
     full_text: list[str] = []
 
     def generate():
-        try:
-            for chunk in agent.stream_respond(req.message):
-                full_text.append(chunk)
-                yield f"data: {json.dumps({'delta': chunk})}\n\n"
-        except Exception as e:
-            yield f"data: {json.dumps({'error': str(e)})}\n\n"
-            return
-        full_response = "".join(full_text)
-        storage.save_agent_state(req.relationship_id, req.partner, agent)
-        storage.log_message(req.relationship_id, req.partner, "user", req.message)
-        storage.log_message(req.relationship_id, req.partner, "assistant", full_response)
-        yield f"data: {json.dumps({'done': True})}\n\n"
+        q: queue.Queue = queue.Queue()
 
-    return StreamingResponse(generate(), media_type="text/event-stream")
+        def stream_worker():
+            try:
+                for chunk in agent.stream_respond(req.message):
+                    q.put(("delta", chunk))
+                q.put(("done", None))
+            except Exception as e:
+                q.put(("error", str(e)))
+
+        threading.Thread(target=stream_worker, daemon=True).start()
+
+        while True:
+            try:
+                kind, value = q.get(timeout=4)
+            except queue.Empty:
+                yield ": keep-alive\n\n"
+                continue
+            if kind == "delta":
+                full_text.append(value)
+                yield f"data: {json.dumps({'delta': value})}\n\n"
+            elif kind == "error":
+                yield f"data: {json.dumps({'error': value})}\n\n"
+                return
+            else:  # done
+                full_response = "".join(full_text)
+                storage.save_agent_state(req.relationship_id, req.partner, agent)
+                storage.log_message(req.relationship_id, req.partner, "user", req.message)
+                storage.log_message(req.relationship_id, req.partner, "assistant", full_response)
+                yield f"data: {json.dumps({'done': True})}\n\n"
+                return
+
+    return StreamingResponse(generate(), media_type="text/event-stream",
+                             headers={"X-Accel-Buffering": "no"})
 
 
 @app.post("/api/sync")
@@ -250,20 +272,40 @@ def joint_session(req: JointSessionRequest):
     full_text: list[str] = []
 
     def generate():
-        try:
-            for chunk in trinity.relationship_counselor.stream_respond(speaker_name, req.message):
-                full_text.append(chunk)
-                yield f"data: {json.dumps({'delta': chunk})}\n\n"
-        except Exception as e:
-            yield f"data: {json.dumps({'error': str(e)})}\n\n"
-            return
-        full_response = "".join(full_text)
-        storage.save_agent_state(req.relationship_id, "r", trinity.relationship_counselor)
-        storage.log_message(req.relationship_id, f"joint_{req.speaker}", "user", req.message)
-        storage.log_message(req.relationship_id, f"joint_{req.speaker}", "assistant", full_response)
-        yield f"data: {json.dumps({'done': True})}\n\n"
+        q: queue.Queue = queue.Queue()
 
-    return StreamingResponse(generate(), media_type="text/event-stream")
+        def stream_worker():
+            try:
+                for chunk in trinity.relationship_counselor.stream_respond(speaker_name, req.message):
+                    q.put(("delta", chunk))
+                q.put(("done", None))
+            except Exception as e:
+                q.put(("error", str(e)))
+
+        threading.Thread(target=stream_worker, daemon=True).start()
+
+        while True:
+            try:
+                kind, value = q.get(timeout=4)
+            except queue.Empty:
+                yield ": keep-alive\n\n"
+                continue
+            if kind == "delta":
+                full_text.append(value)
+                yield f"data: {json.dumps({'delta': value})}\n\n"
+            elif kind == "error":
+                yield f"data: {json.dumps({'error': value})}\n\n"
+                return
+            else:  # done
+                full_response = "".join(full_text)
+                storage.save_agent_state(req.relationship_id, "r", trinity.relationship_counselor)
+                storage.log_message(req.relationship_id, f"joint_{req.speaker}", "user", req.message)
+                storage.log_message(req.relationship_id, f"joint_{req.speaker}", "assistant", full_response)
+                yield f"data: {json.dumps({'done': True})}\n\n"
+                return
+
+    return StreamingResponse(generate(), media_type="text/event-stream",
+                             headers={"X-Accel-Buffering": "no"})
 
 
 @app.get("/api/session/{code}/history/{partner}")
