@@ -5,6 +5,8 @@ Endpoints for solo sessions, joint sessions, and RIL sync.
 """
 
 import os
+
+import anthropic
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -67,7 +69,16 @@ def solo_session(req: SoloSessionRequest):
     The other partner never sees this conversation.
     """
     trinity = _get_trinity(req.relationship_id)
-    response = trinity.solo_session(req.partner, req.message)
+    try:
+        response = trinity.solo_session(req.partner, req.message)
+    except anthropic.APITimeoutError:
+        raise HTTPException(503, "AI service timed out. Please try again.")
+    except anthropic.APIConnectionError:
+        raise HTTPException(503, "Unable to reach AI service. Please try again.")
+    except anthropic.InternalServerError:
+        raise HTTPException(503, "AI service error. Please try again shortly.")
+    except anthropic.APIError as exc:
+        raise HTTPException(502, f"AI service returned an error: {exc.message}")
     return {"response": response, "mode": "private"}
 
 
@@ -79,7 +90,16 @@ def sync_ril(relationship_id: str):
     Call this after a batch of solo sessions.
     """
     trinity = _get_trinity(relationship_id)
-    trinity.sync_to_ril()
+    try:
+        trinity.sync_to_ril()
+    except anthropic.APITimeoutError:
+        raise HTTPException(503, "AI service timed out during sync. Please try again.")
+    except anthropic.APIConnectionError:
+        raise HTTPException(503, "Unable to reach AI service. Please try again.")
+    except anthropic.InternalServerError:
+        raise HTTPException(503, "AI service error during sync. Please try again shortly.")
+    except anthropic.APIError as exc:
+        raise HTTPException(502, f"AI service returned an error: {exc.message}")
     return {
         "status": "synced",
         "relational_model": trinity.relationship_counselor.relational_model,
@@ -94,7 +114,16 @@ def joint_session(req: JointSessionRequest):
     Operates only from abstracted relational context — no private data.
     """
     trinity = _get_trinity(req.relationship_id)
-    response = trinity.joint_session(req.speaker, req.message)
+    try:
+        response = trinity.joint_session(req.speaker, req.message)
+    except anthropic.APITimeoutError:
+        raise HTTPException(503, "AI service timed out. Please try again.")
+    except anthropic.APIConnectionError:
+        raise HTTPException(503, "Unable to reach AI service. Please try again.")
+    except anthropic.InternalServerError:
+        raise HTTPException(503, "AI service error. Please try again shortly.")
+    except anthropic.APIError as exc:
+        raise HTTPException(502, f"AI service returned an error: {exc.message}")
     return {"response": response, "mode": "joint"}
 
 
