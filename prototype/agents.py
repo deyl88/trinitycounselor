@@ -4,9 +4,20 @@ Trinity Counselor — Agent Definitions
 Three agents. One relational intelligence system.
 """
 
-from anthropic import Anthropic
+from anthropic import Anthropic, APITimeoutError, APIConnectionError, InternalServerError
+import time
 
-client = Anthropic()
+client = Anthropic(timeout=120.0)
+
+
+def _call_with_retry(fn, *args, max_retries=3, **kwargs):
+    for attempt in range(max_retries + 1):
+        try:
+            return fn(*args, **kwargs)
+        except (APITimeoutError, APIConnectionError, InternalServerError) as e:
+            if attempt == max_retries:
+                raise
+            time.sleep(2 ** attempt)
 
 # ── System Prompts ────────────────────────────────────────────────────────────
 
@@ -119,7 +130,7 @@ class PartnerAgent:
         self.conversation_history.append({"role": "user", "content": user_message})
         self.recent_messages_buffer.append(user_message)
 
-        response = client.messages.create(
+        response = _call_with_retry(client.messages.create,
             model="claude-sonnet-4-6",
             max_tokens=1024,
             system=self._build_system(),
@@ -161,7 +172,7 @@ class PartnerAgent:
         Do not include specific quotes. Write in third person ("The client...").
         """
 
-        response = client.messages.create(
+        response = _call_with_retry(client.messages.create,
             model="claude-sonnet-4-6",
             max_tokens=600,
             system="You maintain therapeutic summaries. Be precise, compassionate, and pattern-focused.",
@@ -183,7 +194,7 @@ class PartnerAgent:
         messages_text = "\n".join(self.recent_messages_buffer)
         self.recent_messages_buffer = []  # clear buffer after extraction
 
-        response = client.messages.create(
+        response = _call_with_retry(client.messages.create,
             model="claude-sonnet-4-6",
             max_tokens=512,
             system=SAP_SYSTEM,
@@ -244,7 +255,7 @@ class RelationshipCounselor:
         Write in observational, non-attributive language.
         """
 
-        response = client.messages.create(
+        response = _call_with_retry(client.messages.create,
             model="claude-sonnet-4-6",
             max_tokens=300,
             system="You model relational dynamics from abstracted signals. No attribution to individuals.",
@@ -268,7 +279,7 @@ class RelationshipCounselor:
         contextualized_message = f"[{speaker}]: {message}"
         self.conversation_history.append({"role": "user", "content": contextualized_message})
 
-        response = client.messages.create(
+        response = _call_with_retry(client.messages.create,
             model="claude-sonnet-4-6",
             max_tokens=1024,
             system=self._build_system(),
