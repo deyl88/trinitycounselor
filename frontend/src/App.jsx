@@ -10,7 +10,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     height: '100dvh',
-    backgroundColor: '#0F0F0F',
+    backgroundColor: '#0A0A12',
     color: '#FFFFFF',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
     maxWidth: '430px',
