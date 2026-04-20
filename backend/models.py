@@ -54,3 +54,28 @@ class SettingUpsert(BaseModel):
 class SettingResponse(BaseModel):
     key: str
     value: str
+
+
+class EnrichmentRequest(BaseModel):
+    song_name: str
+    artist: str
+
+
+class EnrichmentData(BaseModel):
+    genre: str
+    subgenre: str
+    vocal_range: str
+    emotional_tone: str
+    tempo_feel: str
+    chorus_recognizability: int
+    cover_arrangements: list[str]
+    hook_length_seconds: int
+    audience_fit: str
+    nostalgia_factor: int
+    saturation_risk: str
+
+
+class EnrichmentResponse(BaseModel):
+    song_name: str
+    artist: str
+    enrichment: EnrichmentData

@@ -4,6 +4,7 @@ const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: '📊' },
   { to: '/for-you',   label: 'For You',   icon: '🎵' },
   { to: '/trends',    label: 'Trends',    icon: '📈' },
+  { to: '/import',    label: 'Import',    icon: '＋' },
 ]
 
 const navStyle = {

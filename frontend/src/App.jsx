@@ -3,6 +3,7 @@ import BottomNav from './components/BottomNav.jsx'
 import Dashboard from './screens/Dashboard.jsx'
 import ForYou from './screens/ForYou.jsx'
 import Trends from './screens/Trends.jsx'
+import Import from './screens/Import.jsx'
 
 const styles = {
   app: {
@@ -32,6 +33,7 @@ export default function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/for-you" element={<ForYou />} />
             <Route path="/trends" element={<Trends />} />
+            <Route path="/import" element={<Import />} />
           </Routes>
         </div>
         <BottomNav />
