@@ -11,9 +11,9 @@ export default defineConfig({
       manifest: {
         name: 'SV Studio',
         short_name: 'SV Studio',
-        description: 'AI-powered cover song coach for TikTok and Instagram creators',
-        theme_color: '#FF6B35',
-        background_color: '#0F0F0F',
+        description: 'AI-powered cover song coach for Summer Victoria',
+        theme_color: '#C77DFF',
+        background_color: '#0A0A12',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
@@ -37,7 +37,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         runtimeCaching: [
           {
-            urlPattern: /^http:\/\/localhost:8000\/api\//,
+            urlPattern: /\/api\//,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',
@@ -46,12 +46,14 @@ export default defineConfig({
           },
         ],
       },
-      devOptions: {
-        enabled: true,
-      },
+      devOptions: { enabled: true },
     }),
   ],
   server: {
     port: 5173,
+    proxy: {
+      '/api': 'http://localhost:8000',
+      '/health': 'http://localhost:8000',
+    },
   },
 })

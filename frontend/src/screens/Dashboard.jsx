@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-const API = window.API_URL || 'http://localhost:8000'
+const API = import.meta.env.DEV ? 'http://localhost:8000' : ''
 
 const C = {
   bg: '#0A0A12',
@@ -43,13 +43,9 @@ export default function Dashboard() {
 
   return (
     <div style={{ padding: '28px 16px 16px', background: C.bg, minHeight: '100%' }}>
-
       <div style={{ marginBottom: 24 }}>
         <p style={{ color: C.muted, fontSize: 13, marginBottom: 4 }}>welcome back 🌸</p>
-        <h1 style={{
-          fontSize: 28, fontWeight: 900, margin: 0,
-          background: C.grad, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-        }}>
+        <h1 style={{ fontSize: 28, fontWeight: 900, margin: 0, background: C.grad, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           Summer Victoria
         </h1>
       </div>
@@ -61,10 +57,7 @@ export default function Dashboard() {
           { label: 'Avg Engagement', value: `${avgEng}%`, icon: '📊', color: C.mint },
           { label: 'Covers', value: covers, icon: '🎵', color: C.pink },
         ].map(({ label, value, icon, color }) => (
-          <div key={label} style={{
-            background: C.card, border: `1px solid ${C.border}`,
-            borderRadius: 20, padding: '16px 14px',
-          }}>
+          <div key={label} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: '16px 14px' }}>
             <div style={{ fontSize: 22, marginBottom: 6 }}>{icon}</div>
             <div style={{ fontSize: 24, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
             <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>{label}</div>
@@ -73,52 +66,28 @@ export default function Dashboard() {
       </div>
 
       {fp && (
-        <div style={{
-          background: C.gradSoft, border: `1px solid rgba(199,125,255,0.2)`,
-          borderRadius: 22, padding: 18, marginBottom: 16,
-        }}>
+        <div style={{ background: C.gradSoft, border: '1px solid rgba(199,125,255,0.2)', borderRadius: 22, padding: 18, marginBottom: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <span style={{ fontWeight: 700, fontSize: 15 }}>Your Sound ✨</span>
-            <span style={{ fontSize: 11, color: C.muted, background: C.card, padding: '3px 8px', borderRadius: 20 }}>
-              {fp.sample_size} top videos
-            </span>
+            <span style={{ fontSize: 11, color: C.muted, background: C.card, padding: '3px 8px', borderRadius: 20 }}>{fp.sample_size} top videos</span>
           </div>
-
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
             {Object.entries(fp.genre || {}).slice(0, 3).map(([g, pct]) => (
-              <span key={g} style={{
-                background: 'rgba(199,125,255,0.2)', color: C.purple,
-                fontSize: 12, padding: '4px 11px', borderRadius: 20,
-                border: '1px solid rgba(199,125,255,0.3)', fontWeight: 600,
-              }}>
+              <span key={g} style={{ background: 'rgba(199,125,255,0.2)', color: C.purple, fontSize: 12, padding: '4px 11px', borderRadius: 20, border: '1px solid rgba(199,125,255,0.3)', fontWeight: 600 }}>
                 {g} · {Math.round(pct * 100)}%
               </span>
             ))}
             {Object.entries(fp.emotional_tone || {}).slice(0, 2).map(([t, pct]) => (
-              <span key={t} style={{
-                background: 'rgba(255,133,194,0.2)', color: C.pink,
-                fontSize: 12, padding: '4px 11px', borderRadius: 20,
-                border: '1px solid rgba(255,133,194,0.3)', fontWeight: 600,
-              }}>
+              <span key={t} style={{ background: 'rgba(255,133,194,0.2)', color: C.pink, fontSize: 12, padding: '4px 11px', borderRadius: 20, border: '1px solid rgba(255,133,194,0.3)', fontWeight: 600 }}>
                 {t} · {Math.round(pct * 100)}%
               </span>
             ))}
           </div>
-
           {fp.preferred_arrangements?.length > 0 && (
-            <div style={{ fontSize: 12, color: C.muted }}>
-              Best with{' '}
-              <span style={{ color: '#D4B8FF', fontWeight: 600 }}>
-                {fp.preferred_arrangements.slice(0, 3).join(' · ')}
-              </span>
-            </div>
+            <div style={{ fontSize: 12, color: C.muted }}>Best with <span style={{ color: '#D4B8FF', fontWeight: 600 }}>{fp.preferred_arrangements.slice(0, 3).join(' · ')}</span></div>
           )}
-
           {fp.avg_chorus_recognizability && (
-            <div style={{ marginTop: 8, fontSize: 12, color: C.muted }}>
-              Chorus recognizability avg{' '}
-              <span style={{ color: C.mint, fontWeight: 700 }}>{fp.avg_chorus_recognizability}/10</span>
-            </div>
+            <div style={{ marginTop: 8, fontSize: 12, color: C.muted }}>Chorus recognizability avg <span style={{ color: C.mint, fontWeight: 700 }}>{fp.avg_chorus_recognizability}/10</span></div>
           )}
         </div>
       )}
@@ -126,33 +95,16 @@ export default function Dashboard() {
       {videos.length > 0 && (
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 22, padding: 18 }}>
           <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 14 }}>Top Performers 🏆</p>
-          {[...videos]
-            .sort((a, b) => (b.views || 0) - (a.views || 0))
-            .slice(0, 3)
-            .map((v, i) => (
-              <div key={v.id} style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                paddingBottom: i < 2 ? 12 : 0, marginBottom: i < 2 ? 12 : 0,
-                borderBottom: i < 2 ? `1px solid ${C.border}` : 'none',
-              }}>
-                <div style={{
-                  width: 30, height: 30, borderRadius: 10, flexShrink: 0,
-                  background: C.grad, display: 'flex', alignItems: 'center',
-                  justifyContent: 'center', fontSize: 13, fontWeight: 800, color: '#fff',
-                }}>
-                  {i + 1}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {v.song_name || v.title || 'Untitled'}
-                  </div>
-                  <div style={{ fontSize: 11, color: C.muted }}>{v.song_artist || '—'}</div>
-                </div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: C.purple, flexShrink: 0 }}>
-                  {fmt(v.views)}
-                </div>
+          {[...videos].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 3).map((v, i) => (
+            <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: i < 2 ? 12 : 0, marginBottom: i < 2 ? 12 : 0, borderBottom: i < 2 ? `1px solid ${C.border}` : 'none' }}>
+              <div style={{ width: 30, height: 30, borderRadius: 10, flexShrink: 0, background: C.grad, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color: '#fff' }}>{i + 1}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v.song_name || v.title || 'Untitled'}</div>
+                <div style={{ fontSize: 11, color: C.muted }}>{v.song_artist || '—'}</div>
               </div>
-            ))}
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.purple, flexShrink: 0 }}>{fmt(v.views)}</div>
+            </div>
+          ))}
         </div>
       )}
 
