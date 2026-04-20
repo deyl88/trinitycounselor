@@ -9,6 +9,7 @@ from routers import (
     enrichment as enrichment_router,
     auth as auth_router,
     import_routes,
+    fingerprint as fingerprint_router,
 )
 
 
@@ -37,6 +38,7 @@ app.include_router(settings_router.router,   prefix="/api/settings",      tags=[
 app.include_router(enrichment_router.router, prefix="/api/enrich",        tags=["enrichment"])
 app.include_router(auth_router.router,       prefix="/api/auth",           tags=["auth"])
 app.include_router(import_routes.router,     prefix="/api/import",         tags=["import"])
+app.include_router(fingerprint_router.router, prefix="/api/fingerprint",   tags=["fingerprint"])
 
 
 @app.get("/health")
