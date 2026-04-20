@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, BackgroundTasks
+from pydantic import BaseModel
 from database import get_db
 from models import RecommendationCreate, RecommendationResponse, RecommendationUpdate
 from typing import List, Optional
@@ -6,6 +7,18 @@ from typing import List, Optional
 router = APIRouter()
 
 _ALLOWED_STATUSES = {"pending", "saved", "skipped"}
+_generating = False
+
+
+class CandidateSong(BaseModel):
+    song_name: str
+    artist: str = "Unknown"
+    trending_score: float = 0.5
+
+
+class GenerateRequest(BaseModel):
+    songs: List[CandidateSong]
+    trending_weight: float = 0.3
 
 
 @router.get("/", response_model=List[RecommendationResponse])
@@ -38,6 +51,34 @@ def create_recommendation(rec: RecommendationCreate):
             "SELECT * FROM recommendations WHERE id=?", (cursor.lastrowid,)
         ).fetchone()
         return dict(row)
+
+
+@router.post("/generate")
+def generate(req: GenerateRequest, background_tasks: BackgroundTasks):
+    """Score candidate songs against the fingerprint and generate tips. Runs in background."""
+    global _generating
+    if _generating:
+        raise HTTPException(409, "Generation already in progress.")
+    _generating = True
+
+    from recommend import generate_recommendations
+
+    def _run():
+        global _generating
+        try:
+            generate_recommendations(
+                [c.model_dump() for c in req.songs],
+                trending_weight=req.trending_weight,
+            )
+        finally:
+            _generating = False
+
+    background_tasks.add_task(_run)
+    return {
+        "status": "generating",
+        "song_count": len(req.songs),
+        "message": "Scoring and tip generation started. Poll GET / to see results.",
+    }
 
 
 @router.patch("/{rec_id}", response_model=RecommendationResponse)
